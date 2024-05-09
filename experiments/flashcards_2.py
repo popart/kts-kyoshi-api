@@ -26,8 +26,8 @@ tools = [
                   "items": {
                       "type": "object",
                       "properties": {
-                          "japanese_example": { "type": "string", "description": "the vocab or grammar point as written and conjugated in the input text, without changes" },
-                          "dictionary_form": {"type": "string", "description": "For vocab words, the vocab word in its dictionary, root form, in its most commonly seen writing variant." },
+                          "japanese_example": { "type": "string", "description": "the vocab or grammar point as written and conjugated in the input text, without changes. pronunciation is appended in parenthesis." },
+                          "dictionary_form": {"type": "string", "description": "For vocab words, the vocab word in its dictionary, root form, in its most commonly seen writing variant. pronunciation is appended in parenthesis." },
                           "teaching_notes": {"type": "string", "description": "Explanation of grammar, including conjugation & colloqualisms. For shortened spoken forms, expands the form to its full originating phrase" },
                       }
                   },
@@ -64,7 +64,7 @@ messages.append({
                 "japanese_flash_cards": [
                     {
                         "japanese_example":"しょうがない",
-                        "dictionary_form":"仕方がない",
+                        "dictionary_form":"仕方がない(しかたがない)",
                         "teaching_notes":"Expression: 'It can't be helped' or 'nothing can be done about it.' Often used to express resignation or acceptance of a situation. A contraction where '仕方' means 'method' or 'way,' and 'がない' means 'there is none.'"
                     },
                     {
@@ -74,7 +74,7 @@ messages.append({
                     },
                     {
                         "japanese_example":"いこう",
-                        "dictionary_form":"行く",
+                        "dictionary_form":"行く(いく)",
                         "teaching_notes":"Verb: volitional form of the verb '行く' (to go), used to express a decision or suggestion about the future, equivalent to saying 'let's go' in English."
                     }
                 ],
