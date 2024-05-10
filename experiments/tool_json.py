@@ -24,6 +24,13 @@ def tool_call_to_dict(tool_call):
         }
     }
 
+def gen_tool_call_response(tool_call):
+    return {
+        "role": "tool",
+        "tool_call_id": tool_call.id,
+        "content": "SUCCESS",
+    }
+
 tools = [
     {
         "type": "function",

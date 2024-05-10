@@ -1,68 +1,41 @@
 import json
 import logging
 import sys
-import uuid
 
-from openai import OpenAI
+from clients.chat.abstract_chat_client import AbstractChatClient
+from clients.chat import chat_types
 
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-client = OpenAI()
-MODEL = "gpt-4-1106-preview" # gpt-4 turbo
-MAX_TOKENS = 1000
 
 class Prompt:
-    def __init__(self, role: str, tools: list[dict]=None, examples: list[dict]=None):
+    def __init__(self,
+                 chat_client: AbstractChatClient,
+                 role: str,
+                 tools: list[dict]=None,
+                 examples: list[chat_types.ChatMessage]=None):
+        self.chat_client = chat_client
         self.base_messages = []
-        self.base_messages.append({"role": "system", "content": role })
+        self.base_messages.append(chat_types.ChatMessage(role="system", content=role))
         if examples:
             self.base_messages += examples
         self.tools=tools
 
-    def fetch(self, messages: list[dict]) -> list[dict]:
+    def fetch(self, messages: list[dict]) -> chat_types.ChatMessage:
+        """
+        Returns:
+          {} a chat message dict, empty if we didn't get a good response
+        """
         input_messages = self.base_messages.copy() + messages
 
-        logger.info(f"openai post: {input_messages}")
+        logger.info(f"completing chat: {input_messages}")
 
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=input_messages,
-            frequency_penalty=0.1,
-            presence_penalty=0.1,
-            temperature=0.1,
-            user=str(uuid.uuid4()),
+        chat_message: chat_types.ChatMessage = self.chat_client.complete_chat(
+            input_messages=input_messages,
             tools=self.tools,
             tool_choice="auto",
-            max_tokens=MAX_TOKENS,
         )
-        choice = response.choices[0]
 
-        output_messages = []
-
-        if choice.finish_reason == "stop":
-            output_messages.append({
-                "role": "assistant",
-                "content": choice.message.content,
-            })
-        elif choice.finish_reason == "tool_calls":
-            output = choice.message.tool_calls[0].function.arguments
-            try:
-                # verify that output is valid json
-                tool_response = json.loads(output)
-                output_messages.append({
-                    "role": "assistant",
-                    "tool_calls": choice.message.tool_calls,
-                })
-                output_messages.append({
-                    "role": "tool",
-                    "tool_call_id": choice.message.tool_calls[0].id,
-                    "content": "SUCCESS",
-                })
-            except json.decoder.JSONDecodeError:
-                logger.error("Couldn't decode JSON: %s", output)
-        else:
-            logger.error("Response couldn't be read: %s", str(choice))
-
-        return output_messages
+        return chat_message

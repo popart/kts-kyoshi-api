@@ -1,5 +1,7 @@
 import json
 
+from clients.chat import chat_types
+from clients.chat.abstract_chat_client import AbstractChatClient
 from prompts.prompt import Prompt
 
 
@@ -39,15 +41,15 @@ tools = [
     },
 ]
 examples = []
-examples.append({"role": "user", "content": "しょうがない、それでいこう" })
-examples.append({
-    "role": "assistant",
-    "tool_calls": [{
-        "id": "call_001",
-        "type": "function",
-        "function": {
-            "name": "save_japanese_vocab_words",
-            "arguments": json.dumps({
+examples.append(chat_types.ChatMessage(role="user", content="しょうがない、それでいこう"))
+examples.append(chat_types.ChatMessage(
+    role="assistant",
+    tool_calls=[chat_types.ToolCall(
+        id="call_001",
+        type="function",
+        function=chat_types.Function(
+            name="save_japanese_vocab_words",
+            arguments=json.dumps({
                 "japanese_flash_cards": [
                     {
                         "japanese_example":"しょうがない",
@@ -67,13 +69,9 @@ examples.append({
                 ],
                 "translation": "It can't be helped, let's go with that."
             })
-        }
-    }]
-})
-examples.append({
-    "role": "tool",
-    "tool_call_id": "call_001",
-    "content": "SUCCESS",
-})
+        )
+    )]
+))
 
-flashcards_prompt = Prompt(role=role, tools=tools, examples=examples)
+def get_prompt_flashcards(chat_client: AbstractChatClient):
+    return Prompt(chat_client=chat_client, role=role, tools=tools, examples=examples)

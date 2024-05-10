@@ -1,3 +1,5 @@
+import os
+
 from dataclasses import dataclass
 import flask
 import flask_cors
@@ -5,7 +7,10 @@ import json
 import logging
 import sys
 
-from prompts.prompt_flashcards import flashcards_prompt
+from prompts.prompt_flashcards import get_prompt_flashcards
+from clients.chat.openai_chat_client import OpenAIChatClient
+from clients.chat.fake_chat_client import FakeChatClient
+from clients.chat import chat_types
 
 
 logger = logging.getLogger(__name__)
@@ -18,13 +23,15 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 app = flask.Flask(__name__)
 flask_cors.CORS(app)
 
-# TODO: replace w/ a db
-# dict[str, list[message]]
-CHATS = {}
+# init app (ghetto DI)
+if os.getenv("ENV") == "PROD":
+    CHAT_CLIENT = OpenAIChatClient()
+else:
+    CHAT_CLIENT = FakeChatClient()
+PROMPT_FLASHCARDS = get_prompt_flashcards(CHAT_CLIENT)
+CHATS: dict[str, list[chat_types.ChatMessage]] = {}
 
-@dataclass
-class ChatMessage:
-    content: str
+CHAT_LOOKBACK = -3
 
 @app.route('/', methods=['GET'])
 def homepage():
@@ -32,34 +39,41 @@ def homepage():
 
 @app.route('/chat/<chat_id>', methods=['POST'])
 def chat(chat_id):
-    message = flask.request.json['message']  # what's the format? for now a str
-    logger.info(f"Chat {chat_id} new message: {message}")
+    if chat_id not in CHATS:
+        CHATS[chat_id] = []
+    chat = CHATS[chat_id]
+    logger.info(f"Found chat {chat_id}: {chat}")
 
-    # TODO: add some context messages from the CHATS db
-    #       required if you want to ask questions about the flashcards
-    input_messages = [{"role": "user", "content": message }]
+    message = flask.request.json['message']
+    logger.info(f"Chat {chat_id} new message: {message}")
+    new_chat_message = chat_types.ChatMessage(
+        role="user",
+        content=message,
+    )
+
+    input_messages = chat[CHAT_LOOKBACK:].copy()
+    input_messages.append(new_chat_message)
 
     # first get flashcards messages (openAI format)
     try:
-        output_messages = flashcards_prompt.fetch(input_messages)
-        first_output = output_messages[0]
-        if "content" in first_output:
-            content_output = {"message": first_output["content"]}
-        elif "tool_calls" in first_output:
-            content_output = json.loads(first_output["tool_calls"][0].function.arguments)
-            content_output["input"] = message
+        output_message = PROMPT_FLASHCARDS.fetch(input_messages)
+        if output_message.content:
+            res = {"message": output_message.content}
+        elif output_message.tool_calls:
+            res = json.loads(output_message.tool_calls[0].function.arguments)
+            res["input"] = message
         else:
-            logger.error("Bad output message: %s", str(output_messages))
-            content_output = {"message": "ERROR: I couldn't handle that message."}
+            logger.error("Bad output message: %s", str(output_message))
+            res = {"message": "ERROR: I couldn't handle that message."}
+
+        # save messages to CHATS
+        chat.append(new_chat_message)
+        chat.append(output_message)
     except Exception as e:
         logger.error(e, exc_info=True)
-        content_output = {"message": "ERROR: I couldn't handle that message."}
+        res = {"message": "ERROR: I couldn't handle that message."}
 
-    # TODO: save messages to CHATS db (openAI format)
-    #       actually no reason to save the tool call responses... can generate them anyways
-    #       need to return the message ids so it's easy to save flashcards
-
-    return flask.jsonify(content_output)
+    return flask.jsonify(res)
 
 @app.route('/flashcard/<chat_id>/<card_index>', methods=['POST'])
 def save_flashcard(chat_id, card_index):
