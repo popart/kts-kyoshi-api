@@ -57,18 +57,24 @@ def chat(chat_id):
     # first get flashcards messages (openAI format)
     try:
         output_message = PROMPT_FLASHCARDS.fetch(input_messages)
+        save_result = True
         if output_message.content:
             res = {"message": output_message.content}
+
+            # irrelevant answer should be "..."
+            if output_message.content == "...":
+                save_result = False
         elif output_message.tool_calls:
             res = json.loads(output_message.tool_calls[0].function.arguments)
             res["input"] = message
         else:
+            save_result = False
             logger.error("Bad output message: %s", str(output_message))
             res = {"message": "ERROR: I couldn't handle that message."}
 
-        # save messages to CHATS
-        chat.append(new_chat_message)
-        chat.append(output_message)
+        if save_result:
+            chat.append(new_chat_message)
+            chat.append(output_message)
     except Exception as e:
         logger.error(e, exc_info=True)
         res = {"message": "ERROR: I couldn't handle that message."}

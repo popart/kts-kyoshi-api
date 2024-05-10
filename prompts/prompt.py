@@ -11,6 +11,17 @@ logger.setLevel(logging.INFO)
 
 
 class Prompt:
+    """Base class for setting up chat prompt.
+
+    Inputs:
+    - role: system commands. should specify that irrelevant responses will end in "..."
+        to avoid saving them and their requests to db (see app.chat)
+    - tools: openai style function call specifications
+    - examples: list of example messages for few-shot priming.
+        for tool calls, you don't need to specify the tool call response!
+        ChatClient assumes that tool call results are always "SUCCESS"
+    """
+
     def __init__(self,
                  chat_client: AbstractChatClient,
                  role: str,
