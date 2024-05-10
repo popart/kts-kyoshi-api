@@ -15,7 +15,8 @@ from clients.chat import chat_types
 from clients.chat.abstract_chat_client import AbstractChatClient
 
 class OpenAIChatClient(AbstractChatClient):
-    MODEL = "gpt-4-1106-preview"
+    #MODEL = "gpt-4-1106-preview"
+    MODEL = "gpt-4-turbo"
     MAX_TOKENS = 1000
 
     def __init__(self):
