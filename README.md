@@ -20,4 +20,6 @@ docker start my_db
 docker stop my_db
 docker rm my_db
 ```
+need to create database manually
+`CREATE DATABASE kyoshi`
 

@@ -1,9 +1,11 @@
-import os
-import flask
-import flask_cors
 import json
 import logging
+import os
 import sys
+
+import flask
+import flask_cors
+from sqlalchemy import create_engine
 
 from prompts.prompt_flashcards import get_prompt_flashcards
 from clients.chat.openai_chat_client import OpenAIChatClient
@@ -28,6 +30,8 @@ else:
     CHAT_CLIENT = FakeChatClient(response_type=os.getenv("CHAT_TYPE", "CHAT"))
 PROMPT_FLASHCARDS = get_prompt_flashcards(CHAT_CLIENT)
 CHATS: dict[str, list[chat_types.ChatMessage]] = {}
+PG_ENGINE = create_engine("postgresql+psycopg://postgres:mypassword@localhost:5432")
+
 
 CHAT_LOOKBACK = -3
 
