@@ -9,14 +9,24 @@ import json
 
 client = OpenAI()
 MODEL = "gpt-4-turbo"
-#MODEL = "gpt-3.5-turbo" # doesn't work
+# MODEL = "gpt-3.5-turbo" # doesn't work
 
 tools = None
 tool_choice = None
 messages = []
-messages.append({"role": "system", "content": """You are a japanese translation function. Return the simplest translation that captures the nuance of the sentence."""})
+messages.append(
+    {
+        "role": "system",
+        "content": """You are a japanese translation function. Return the simplest translation that captures the nuance of the sentence.""",
+    }
+)
 
-messages.append({"role": "user", "content": "お前が近所からどう言われてるか、知らない訳じゃなだろ！" })
+messages.append(
+    {
+        "role": "user",
+        "content": "お前が近所からどう言われてるか、知らない訳じゃなだろ！",
+    }
+)
 
 response = client.chat.completions.create(
     model=MODEL,

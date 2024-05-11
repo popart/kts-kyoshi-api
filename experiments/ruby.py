@@ -9,18 +9,25 @@ import json
 
 client = OpenAI()
 MODEL = "gpt-4-turbo"
-#MODEL = "gpt-3.5-turbo" # doesn't work
+# MODEL = "gpt-3.5-turbo" # doesn't work
 
 tools = None
 tool_choice = None
 messages = []
-messages.append({"role": "system", "content": """You are a japanese html generator. If there's kanji, use ruby tags to add furigana to the Japanese text fragment. If not, return the text unmodified."""})
+messages.append(
+    {
+        "role": "system",
+        "content": """You are a japanese html generator. If there's kanji, use ruby tags to add furigana to the Japanese text fragment. If not, return the text unmodified.""",
+    }
+)
 
-messages.append({"role": "user", "content": "仕方がない" })
-messages.append({"role": "assistant", "content": """<ruby>仕方<rt>しかた</rt></ruby>がない""" })
-messages.append({"role": "user", "content": "それで" })
-messages.append({"role": "assistant", "content": """それで""" })
-messages.append({"role": "assistant", "content": """何度""" })
+messages.append({"role": "user", "content": "仕方がない"})
+messages.append(
+    {"role": "assistant", "content": """<ruby>仕方<rt>しかた</rt></ruby>がない"""}
+)
+messages.append({"role": "user", "content": "それで"})
+messages.append({"role": "assistant", "content": """それで"""})
+messages.append({"role": "assistant", "content": """何度"""})
 
 response = client.chat.completions.create(
     model=MODEL,

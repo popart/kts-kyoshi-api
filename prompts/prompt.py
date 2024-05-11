@@ -1,6 +1,4 @@
-import json
 import logging
-import sys
 
 from clients.chat.abstract_chat_client import AbstractChatClient
 from clients.chat import chat_types
@@ -22,19 +20,21 @@ class Prompt:
         ChatClient assumes that tool call results are always "SUCCESS"
     """
 
-    def __init__(self,
-                 chat_client: AbstractChatClient,
-                 role: str,
-                 tools: list[dict]=None,
-                 examples: list[chat_types.ChatMessage]=None):
+    def __init__(
+        self,
+        chat_client: AbstractChatClient,
+        role: str,
+        tools: list[dict] | None = None,
+        examples: list[chat_types.ChatMessage] | None = None,
+    ):
         self.chat_client = chat_client
         self.base_messages = []
         self.base_messages.append(chat_types.ChatMessage(role="system", content=role))
         if examples:
             self.base_messages += examples
-        self.tools=tools
+        self.tools = tools
 
-    def fetch(self, messages: list[dict]) -> chat_types.ChatMessage:
+    def fetch(self, messages: list[chat_types.ChatMessage]) -> chat_types.ChatMessage:
         """
         Returns:
           {} a chat message dict, empty if we didn't get a good response

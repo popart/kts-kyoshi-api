@@ -1,15 +1,18 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class Function:
     name: str
     arguments: str  # json formatted string
+
 
 @dataclass
 class ToolCall:
     id: str
     type: str
     function: Function
+
 
 @dataclass
 class ChatMessage:

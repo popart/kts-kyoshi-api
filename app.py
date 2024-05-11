@@ -1,6 +1,4 @@
 import os
-
-from dataclasses import dataclass
 import flask
 import flask_cors
 import json
@@ -27,24 +25,26 @@ flask_cors.CORS(app)
 if os.getenv("ENV") == "PROD":
     CHAT_CLIENT = OpenAIChatClient()
 else:
-    CHAT_CLIENT = FakeChatClient()
+    CHAT_CLIENT = FakeChatClient(response_type=os.getenv("CHAT_TYPE", "CHAT"))
 PROMPT_FLASHCARDS = get_prompt_flashcards(CHAT_CLIENT)
 CHATS: dict[str, list[chat_types.ChatMessage]] = {}
 
 CHAT_LOOKBACK = -3
 
-@app.route('/', methods=['GET'])
-def homepage():
-    return 'Ack! What are you doing back here?!'
 
-@app.route('/chat/<chat_id>', methods=['POST'])
+@app.route("/", methods=["GET"])
+def homepage():
+    return "Ack! What are you doing back here?!"
+
+
+@app.route("/chat/<chat_id>", methods=["POST"])
 def chat(chat_id):
     if chat_id not in CHATS:
         CHATS[chat_id] = []
     chat = CHATS[chat_id]
     logger.info(f"Found chat {chat_id}: {chat}")
 
-    message = flask.request.json['message']
+    message = flask.request.json["message"]
     logger.info(f"Chat {chat_id} new message: {message}")
     new_chat_message = chat_types.ChatMessage(
         role="user",
@@ -81,10 +81,12 @@ def chat(chat_id):
 
     return flask.jsonify(res)
 
-@app.route('/flashcard/<chat_id>/<card_index>', methods=['POST'])
+
+@app.route("/flashcard/<chat_id>/<card_index>", methods=["POST"])
 def save_flashcard(chat_id, card_index):
     """Fetches the chat from the db, and generates a flashcard from the given index"""
     pass
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5555, debug=True)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5555, debug=True)
