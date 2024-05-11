@@ -195,3 +195,43 @@ pprint.pprint(response)
 if response.choices[0].message.tool_calls:
     output = response.choices[0].message.tool_calls[0].function.arguments
     pprint.pprint(json.loads(output))
+
+""" Sample gpt-4-turbo
+Claude Sonnet can't figure out pronunciations or jlpt level properly
+{
+    "message": "挙動不審の少年二人組を発見"
+}
+
+---
+
+{
+    "input": "挙動不審の少年二人組を発見",
+    "japanese_flash_cards": [
+        {
+            "dictionary_form": "挙動不審(きょどうふしん)",
+            "japanese_example": "挙動不審(きょどうふしん)",
+            "jlpt_level": "N2",
+            "teaching_notes": "Noun: 'suspicious behavior.' Composed of '挙動' (behavior, movement) and '不審' (suspicious, doubtful)."
+        },
+        {
+            "dictionary_form": "少年(しょうねん)",
+            "japanese_example": "少年(しょうねん)",
+            "jlpt_level": "N5",
+            "teaching_notes": "Noun: 'boy' or 'juvenile.' Refers to a young male, typically under the age of 20."
+        },
+        {
+            "dictionary_form": "二人組(ふたりぐみ)",
+            "japanese_example": "二人組(ふたりぐみ)",
+            "jlpt_level": "N5",
+            "teaching_notes": "Noun: 'pair of people' or 'duo.' Indicates two people grouped together for some purpose."
+        },
+        {
+            "dictionary_form": "発見(はっけん)",
+            "japanese_example": "発見(はっけん)",
+            "jlpt_level": "N4",
+            "teaching_notes": "Verb: 'to discover' or 'to find.' Used to indicate the act of finding something that was not previously visible or known."
+        }
+    ],
+    "translation": "Discovered a duo of boys acting suspiciously."
+}
+"""

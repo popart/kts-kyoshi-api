@@ -39,3 +39,9 @@ DB design:
 
 Drop all alembic tables:
 `poetry run python -m scripts.drop_all_tables`
+
+## llm providers
+### 2024-05-11
+gpt-4 definitely works
+claude sonnet (3x cheaper) can't get pronunciations right
+claude opus (3x expensive)
