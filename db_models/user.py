@@ -1,14 +1,21 @@
 """User related DB models."""
-import sqlalchemy as sa
+
+import uuid
+
+from sqlalchemy import Boolean, Column, String, DateTime
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
 from db_models import declarative_base
 
 Base = declarative_base.Base
 
+
 class User(Base):
     __tablename__ = "user"
-    user_id = sa.Column(sa.String, primary_key=True)
-    email = sa.Column(sa.String, unique=True, nullable=False)
-    time_created = sa.Column(sa.DateTime(timezone=True), server_default=func.now())
-    is_active = sa.Column(sa.Boolean, nullable=False, default=True)
+    user_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email = Column(String, unique=True, nullable=False, index=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )

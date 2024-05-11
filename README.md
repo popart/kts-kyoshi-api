@@ -36,3 +36,6 @@ DB design:
 - avoid nulls (default values better if they make sense, e.g. 0 on a column you'll sum)
 - no foreign key constraints (slows the db down)
 - uuids instead of ints for PKs (enables sharding later)
+
+Drop all alembic tables:
+`poetry run python -m scripts.drop_all_tables`

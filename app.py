@@ -41,8 +41,14 @@ def homepage():
     return "Ack! What are you doing back here?!"
 
 
+@app.route("/chat/<chat_id>", methods=["GET"])
+def get_chat(chat_id):
+    """Returns chat messages"""
+    pass
+
+
 @app.route("/chat/<chat_id>", methods=["POST"])
-def chat(chat_id):
+def post_chat(chat_id):
     if chat_id not in CHATS:
         CHATS[chat_id] = []
     chat = CHATS[chat_id]
