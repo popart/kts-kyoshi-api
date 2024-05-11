@@ -23,3 +23,16 @@ docker rm my_db
 need to create database manually
 `CREATE DATABASE kyoshi`
 
+## alembic
+(had to update alembic/env.py for autogeneration)
+`target_metadata = declarative_base.Base.metadata`
+
+```
+poetry run alembic revision --autogenerate -m "create User table"
+poetry run alembic upgrade head
+```
+
+DB design:
+- avoid nulls (default values better if they make sense, e.g. 0 on a column you'll sum)
+- no foreign key constraints (slows the db down)
+- uuids instead of ints for PKs (enables sharding later)

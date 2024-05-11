@@ -283,6 +283,16 @@ files = [
 ]
 
 [[package]]
+name = "importlib"
+version = "1.0.4"
+description = "Backport of importlib.import_module() from Python 2.7"
+optional = false
+python-versions = "*"
+files = [
+    {file = "importlib-1.0.4.zip", hash = "sha256:b6ee7066fea66e35f8d0acee24d98006de1a0a8a94a8ce6efe73a9a23c8d9826"},
+]
+
+[[package]]
 name = "itsdangerous"
 version = "2.2.0"
 description = "Safely pass data to untrusted environments and back."
@@ -740,4 +750,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "fb044d2c9683083446ce1df210a294dae7374ba9c86f89d56169f33801179840"
+content-hash = "7f00e905d53a7c83e177b4d5ac8cb9c10e5f30129675c6c3c2cb22993d296ea0"
