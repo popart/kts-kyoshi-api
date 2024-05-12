@@ -10,7 +10,7 @@ from openai.types.chat.chat_completion_message_tool_call import (
 )
 from openai.types.chat.chat_completion import Choice
 
-from clients.chat import chat_types
+from data_types import chat_types
 from clients.chat.abstract_chat_client import AbstractChatClient
 
 

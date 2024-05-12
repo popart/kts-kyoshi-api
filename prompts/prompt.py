@@ -1,7 +1,7 @@
 import logging
 
 from clients.chat.abstract_chat_client import AbstractChatClient
-from clients.chat import chat_types
+from data_types import chat_types
 
 
 logger = logging.getLogger(__name__)

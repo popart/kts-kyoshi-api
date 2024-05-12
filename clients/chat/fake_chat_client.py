@@ -1,7 +1,7 @@
 import json
 from typing import override
 
-from clients.chat import chat_types
+from data_types import chat_types
 from clients.chat.abstract_chat_client import AbstractChatClient
 
 SAMPLE_FLASH_CARDS = {

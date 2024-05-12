@@ -2,15 +2,18 @@ import json
 import logging
 import os
 import sys
+import uuid
 
 import flask
 import flask_cors
 from sqlalchemy import create_engine
+from werkzeug.wrappers.response import Response
 
 from prompts.prompt_flashcards import get_prompt_flashcards
 from clients.chat.openai_chat_client import OpenAIChatClient
 from clients.chat.fake_chat_client import FakeChatClient
-from clients.chat import chat_types
+from data_types import chat_types
+from handlers import chat_handler
 
 
 logger = logging.getLogger(__name__)
@@ -30,7 +33,9 @@ else:
     CHAT_CLIENT = FakeChatClient(response_type=os.getenv("CHAT_TYPE", "CHAT"))
 PROMPT_FLASHCARDS = get_prompt_flashcards(CHAT_CLIENT)
 CHATS: dict[str, list[chat_types.ChatMessage]] = {}
-PG_ENGINE = create_engine("postgresql+psycopg://postgres:mypassword@localhost:5432")
+DB_ENGINE = create_engine(
+    "postgresql+psycopg://postgres:mypassword@localhost:5432/kyoshi"
+)
 
 
 CHAT_LOOKBACK = -3
@@ -41,18 +46,16 @@ def homepage():
     return "Ack! What are you doing back here?!"
 
 
-@app.route("/chat/<chat_id>", methods=["GET"])
-def get_chat(chat_id):
-    """Returns chat messages"""
-    pass
-
-
-@app.route("/chat/<chat_id>", methods=["POST"])
+@app.route("/chat/<chat_id>", methods=["GET", "POST"])
 def post_chat(chat_id):
-    if chat_id not in CHATS:
-        CHATS[chat_id] = []
-    chat = CHATS[chat_id]
-    logger.info(f"Found chat {chat_id}: {chat}")
+    try:
+        chat_id = uuid.UUID(chat_id)
+    except ValueError:
+        flask.abort(Response("Not a valid chat id", 404))
+
+    chat_messages = chat_handler.get_chat_messages(DB_ENGINE, chat_id)
+    if flask.request.method == "GET":
+        return chat_messages
 
     message = flask.request.json["message"]
     logger.info(f"Chat {chat_id} new message: {message}")
@@ -61,33 +64,33 @@ def post_chat(chat_id):
         content=message,
     )
 
-    input_messages = chat[CHAT_LOOKBACK:].copy()
+    input_messages = chat_messages[CHAT_LOOKBACK:].copy()
     input_messages.append(new_chat_message)
 
     # first get flashcards messages (openAI format)
     try:
         output_message = PROMPT_FLASHCARDS.fetch(input_messages)
-        save_result = True
+        save_result = False
         if output_message.content:
             res = {"message": output_message.content}
-
-            # irrelevant answer should be "..."
-            if output_message.content == "...":
-                save_result = False
+            save_result = True
         elif output_message.tool_calls:
             res = json.loads(output_message.tool_calls[0].function.arguments)
             res["input"] = message
+            save_result = True
         else:
-            save_result = False
             logger.error("Bad output message: %s", str(output_message))
-            res = {"message": "ERROR: I couldn't handle that message."}
+            flask.abort(Response("Couldn't handle that message", 404))
 
         if save_result:
-            chat.append(new_chat_message)
-            chat.append(output_message)
+            chat_handler.save_chat_messages(
+                DB_ENGINE,
+                chat_id,
+                [new_chat_message, output_message],
+            )
     except Exception as e:
         logger.error(e, exc_info=True)
-        res = {"message": "ERROR: I couldn't handle that message."}
+        flask.abort(Response("Couldn't handle that message", 404))
 
     return flask.jsonify(res)
 

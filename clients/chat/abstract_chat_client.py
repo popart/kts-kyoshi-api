@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from clients.chat import chat_types
+from data_types import chat_types
 
 
 class AbstractChatClient(ABC):
