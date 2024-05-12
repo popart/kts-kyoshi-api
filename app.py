@@ -12,7 +12,7 @@ from werkzeug.wrappers.response import Response
 from prompts.prompt_flashcards import get_prompt_flashcards
 from clients.chat.openai_chat_client import OpenAIChatClient
 from clients.chat.fake_chat_client import FakeChatClient
-from data_types import chat_types
+from data_types import chat_types, chat_response_types
 from handlers import chat_handler
 
 
@@ -46,8 +46,8 @@ def homepage():
     return "Ack! What are you doing back here?!"
 
 
-@app.route("/chat/<chat_id>", methods=["GET", "POST"])
-def post_chat(chat_id):
+@app.route("/chat_message/<chat_id>", methods=["GET", "POST"])
+def chat_message(chat_id):
     try:
         chat_id = uuid.UUID(chat_id)
     except ValueError:
@@ -55,7 +55,10 @@ def post_chat(chat_id):
 
     chat_messages = chat_handler.get_chat_messages(DB_ENGINE, chat_id)
     if flask.request.method == "GET":
-        return chat_messages
+        return [
+            chat_response_types.chat_message_to_chat_message_response(cm)
+            for cm in chat_messages
+        ]
 
     message = flask.request.json["message"]
     logger.info(f"Chat {chat_id} new message: {message}")
@@ -70,29 +73,21 @@ def post_chat(chat_id):
     # first get flashcards messages (openAI format)
     try:
         output_message = PROMPT_FLASHCARDS.fetch(input_messages)
-        save_result = False
-        if output_message.content:
-            res = {"message": output_message.content}
-            save_result = True
-        elif output_message.tool_calls:
-            res = json.loads(output_message.tool_calls[0].function.arguments)
-            res["input"] = message
-            save_result = True
-        else:
+
+        if not (output_message.content or output_message.tool_calls):
             logger.error("Bad output message: %s", str(output_message))
             flask.abort(Response("Couldn't handle that message", 404))
 
-        if save_result:
-            chat_handler.save_chat_messages(
-                DB_ENGINE,
-                chat_id,
-                [new_chat_message, output_message],
-            )
+        chat_handler.save_chat_messages(
+            DB_ENGINE,
+            chat_id,
+            [new_chat_message, output_message],
+        )
     except Exception as e:
         logger.error(e, exc_info=True)
         flask.abort(Response("Couldn't handle that message", 404))
 
-    return flask.jsonify(res)
+    return Response({"status": "SUCCESS"}, 200)
 
 
 @app.route("/flashcard/<chat_id>/<card_index>", methods=["POST"])

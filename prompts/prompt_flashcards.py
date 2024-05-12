@@ -15,10 +15,14 @@ tools = [
         "type": "function",
         "function": {
             "name": "create_japanese_flashcards",
-            "description": "Input: a list of japanese_flash_cards. Each item in the list explains a vocab or grammar teaching point from the input sentence.",
+            "description": "Saves a list of japanese_flash_cards. Each item in the list explains a vocab or grammar teaching point from the input sentence.",
             "parameters": {
                 "type": "object",
                 "properties": {
+                    "input_text": {
+                        "type": "string",
+                        "description": "the original input, with typos corrected",
+                    },
                     "japanese_flash_cards": {
                         "type": "array",
                         "description": "A list of flash card objects.",
@@ -45,12 +49,12 @@ tools = [
                             },
                         },
                     },
-                    "translation": {
+                    "translated_text": {
                         "type": "string",
                         "description": "the simplest translation that still captures the nuance of the sentence",
                     },
                 },
-                "required": ["japanese_vocab_words", "translation"],
+                "required": ["japanese_vocab_words", "translated_text"],
             },
         },
     },
@@ -72,6 +76,7 @@ examples.append(
                     name="save_japanese_vocab_words",
                     arguments=json.dumps(
                         {
+                            "input_text": "しょうがない、それでいこう",
                             "japanese_flash_cards": [
                                 {
                                     "japanese_example": "しょうがない",
@@ -92,7 +97,7 @@ examples.append(
                                     "jlpt_level": "N5",
                                 },
                             ],
-                            "translation": "It can't be helped, let's go with that.",
+                            "translated_text": "It can't be helped, let's go with that.",
                         }
                     ),
                 ),
@@ -118,6 +123,7 @@ examples.append(
                     name="save_japanese_vocab_words",
                     arguments=json.dumps(
                         {
+                            "input_text": "お前が近所からどう言われてるか、知らない訳じゃないだろ！",
                             "japanese_flash_cards": [
                                 {
                                     "dictionary_form": "お前(おまえ)",
@@ -170,7 +176,7 @@ examples.append(
                                     "it?' in English.",
                                 },
                             ],
-                            "translation": "You know what the neighborhood says about you, right?",
+                            "translated_text": "You know what the neighborhood says about you, right?",
                         }
                     ),
                 ),

@@ -17,7 +17,6 @@ class ToolCall:
 @dataclass
 class ChatMessage:
     role: str
-    tool_call_id: str | None = None
     tool_calls: list[ToolCall] | None = None
     content: str | None = None
 
@@ -25,7 +24,6 @@ class ChatMessage:
 def dict_to_chat_message(data: dict) -> ChatMessage:
     return ChatMessage(
         role=data["role"],
-        tool_call_id=data.get("tool_call_id"),
         tool_calls=(
             [
                 ToolCall(

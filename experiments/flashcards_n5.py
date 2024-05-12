@@ -20,6 +20,10 @@ tools = [
             "parameters": {
                 "type": "object",
                 "properties": {
+                    "input_text": {
+                        "type": "string",
+                        "description": "the original input, with typos corrected",
+                    },
                     "japanese_flash_cards": {
                         "type": "array",
                         "description": "A list of flash card objects.",
@@ -83,6 +87,7 @@ messages.append(
                     "name": "save_japanese_vocab_words",
                     "arguments": json.dumps(
                         {
+                            "input_text": "しょうがない、それでいこう",
                             "japanese_flash_cards": [
                                 {
                                     "japanese_example": "しょうがない",
