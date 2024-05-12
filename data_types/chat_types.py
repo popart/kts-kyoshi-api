@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+import datetime
+import uuid
 
 
 @dataclass
@@ -19,6 +21,13 @@ class ChatMessage:
     role: str
     tool_calls: list[ToolCall] | None = None
     content: str | None = None
+
+
+@dataclass
+class Chat:
+    user_id: uuid.UUID
+    chat_id: uuid.UUID
+    created_at: datetime.datetime
 
 
 def dict_to_chat_message(data: dict) -> ChatMessage:

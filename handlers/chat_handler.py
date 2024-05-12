@@ -19,6 +19,35 @@ def _get_god_user_id(engine: Engine) -> uuid.UUID:
         return result
 
 
+def create_chat(engine: Engine):
+    god_user_id = _get_god_user_id(engine)
+    chat = db_models.Chat(
+        user_id=god_user_id,
+        llm_provider="OPENAI",
+    )
+    with Session(engine) as session:
+        session.add(chat)
+        session.commit()
+
+
+def get_chats(engine: Engine) -> list[db_models.Chat]:
+    god_user_id = _get_god_user_id(engine)
+    stmt = (
+        select(db_models.Chat)
+        .where(db_models.Chat.user_id == god_user_id)
+        .order_by(desc(db_models.Chat.created_at))
+    )
+    with Session(engine) as session:
+        return [
+            chat_types.Chat(
+                user_id=c.user_id,
+                chat_id=c.chat_id,
+                created_at=c.created_at,
+            )
+            for c in session.scalars(stmt)
+        ]
+
+
 def get_chat_messages(
     engine: Engine, chat_id: uuid.UUID
 ) -> list[chat_types.ChatMessage]:

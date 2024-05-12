@@ -46,6 +46,15 @@ def homepage():
     return "Ack! What are you doing back here?!"
 
 
+@app.route("/chat", methods=["GET", "POST"])
+def chat():
+    if flask.request.method == "GET":
+        return flask.jsonify(chat_handler.get_chats(DB_ENGINE))
+
+    chat_handler.create_chat(DB_ENGINE)
+    return Response({"status": "SUCCESS"}, 200)
+
+
 @app.route("/chat_message/<chat_id>", methods=["GET", "POST"])
 def chat_message(chat_id):
     try:
@@ -54,6 +63,7 @@ def chat_message(chat_id):
         flask.abort(Response("Not a valid chat id", 404))
 
     chat_messages = chat_handler.get_chat_messages(DB_ENGINE, chat_id)
+
     if flask.request.method == "GET":
         return [
             chat_response_types.chat_message_to_chat_message_response(cm)
