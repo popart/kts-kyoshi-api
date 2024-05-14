@@ -15,6 +15,10 @@ from clients.chat.fake_chat_client import FakeChatClient
 from data_types import chat_types, chat_response_types
 from handlers import chat_handler
 
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -22,12 +26,21 @@ logger.setLevel(logging.INFO)
 # log to stdout
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
+# setup from env (move this to a file)
+SESSION_SECRET_KEY =  os.environ["SESSION_SECRET_KEY"]
+GOOGLE_OAUTH_CLIENT_ID = os.environ["GOOGLE_OAUTH_CLIENT_ID"]
+ENV = os.getenv("ENV", "local")
+
 # setup flask app
 app = flask.Flask(__name__)
-flask_cors.CORS(app)
+app.secret_key = SESSION_SECRET_KEY
+
+
+
+flask_cors.CORS(app, supports_credentials=True)
 
 # init app (ghetto DI)
-if os.getenv("ENV") == "PROD":
+if ENV == "PROD":
     CHAT_CLIENT = OpenAIChatClient()
 else:
     CHAT_CLIENT = FakeChatClient(response_type=os.getenv("CHAT_TYPE", "CHAT"))
@@ -46,8 +59,41 @@ def homepage():
     return "Ack! What are you doing back here?!"
 
 
+@app.route('/verify-token', methods=['POST'])
+def verify_token():
+    data = flask.request.json
+    token = data.get('token')
+
+    # Verify the token here using Google's library or any other method
+    try:
+        idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_OAUTH_CLIENT_ID)
+
+        # create a session! this will create a session token
+        flask.session['username'] = idinfo['email']
+
+        response = flask.jsonify({
+            'message': 'Token is valid',
+        })
+        return response
+
+    except ValueError as e:
+        return flask.jsonify({'message': str(e)}), 400
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    flask.session.clear()  # This clears the entire session
+    print("logged out")
+    return flask.jsonify({'message': 'Logged out successfully'}), 200
+
+
 @app.route("/chat", methods=["GET", "POST"])
 def chat():
+    """Returns a list of chats"""
+    current_user = flask.session.get('username')
+    print(f"/chat - current_user: {current_user}")
+    if not current_user:
+        flask.abort(Response("Please log in", 401))
+    
     if flask.request.method == "GET":
         return flask.jsonify(chat_handler.get_chats(DB_ENGINE))
 
@@ -57,6 +103,11 @@ def chat():
 
 @app.route("/chat_message/<chat_id>", methods=["GET", "POST"])
 def chat_message(chat_id):
+    current_user = flask.session.get('username')
+    print(f"/chat_message - current_user: {current_user}")
+    if not current_user:
+        flask.abort(Response("Please log in", 401))
+
     try:
         chat_id = uuid.UUID(chat_id)
     except ValueError:

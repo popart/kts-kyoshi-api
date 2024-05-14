@@ -19,9 +19,8 @@ logger.setLevel(logging.INFO)
 
 
 class OpenAIChatClient(AbstractChatClient):
-    # MODEL = "gpt-4-1106-preview"
-    MODEL = "gpt-4-turbo"
-    MAX_TOKENS = 1000
+    MODEL = "gpt-4o"
+    MAX_TOKENS = 1500
 
     def __init__(self):
         self.client = OpenAI()
