@@ -8,17 +8,19 @@ poetry
 ```
 docker pull postgres:16.2-bookworm
 
-docker run --name my_db -e POSTGRES_PASSWORD=mypassword -e POSTGRES_INITDB_ARGS="--encoding=UTF8" -p 5432:5432 -d postgres:16.2-bookworm
+export DB_NAME="kyoshi_db"
+
+docker run --name $DB_NAME -e POSTGRES_PASSWORD=mypassword -e POSTGRES_INITDB_ARGS="--encoding=UTF8" -p 5432:5432 -d postgres:16.2-bookworm
 
 psql -h localhost -p 5432 -U postgres
 
 # can stop & restart without losing (e.g. shutting down docker)
-docker stop my_db
-docker start my_db
+docker stop $DB_NAME
+docker start $DB_NAME
 
 # to wipe the db
-docker stop my_db
-docker rm my_db
+docker stop $DB_NAME
+docker rm $DB_NAME
 ```
 need to create database manually
 `CREATE DATABASE kyoshi`

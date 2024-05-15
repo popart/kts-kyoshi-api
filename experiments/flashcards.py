@@ -88,7 +88,8 @@ messages.append(
                                 "dictionary_form": "行く",
                                 "teaching_notes": "This is the volitional form of the verb '行く' (to go), used to express a decision or suggestion about the future, equivalent to saying 'let's go' in English.",
                             },
-                        ]
+                        ],
+                        ensure_ascii=False,
                     ),
                 },
             }

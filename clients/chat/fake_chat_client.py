@@ -59,7 +59,7 @@ class FakeChatClient(AbstractChatClient):
                         type="function",
                         function=chat_types.Function(
                             name="fake_function_name",
-                            arguments=json.dumps(self.tool_args),
+                            arguments=json.dumps(self.tool_args, ensure_ascii=False),
                         ),
                     )
                 ],

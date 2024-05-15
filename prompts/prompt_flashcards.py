@@ -98,7 +98,8 @@ examples.append(
                                 },
                             ],
                             "translated_text": "It can't be helped, let's go with that.",
-                        }
+                        },
+                        ensure_ascii=False,
                     ),
                 ),
             )
@@ -177,7 +178,8 @@ examples.append(
                                 },
                             ],
                             "translated_text": "You know what the neighborhood says about you, right?",
-                        }
+                        },
+                        ensure_ascii=False,
                     ),
                 ),
             )
