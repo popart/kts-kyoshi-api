@@ -28,6 +28,7 @@ class FlashCardLesson:
 
 @dataclass
 class ChatMessageResponse:
+    role: str
     message_type: ChatMessageResponseType
     message: str | None
     flash_card_lesson: FlashCardLesson | None
@@ -62,6 +63,7 @@ def chat_message_to_chat_message_response(
         )
 
     return ChatMessageResponse(
+        role=chat_message.role,
         message_type=message_type,
         message=chat_message.content,
         flash_card_lesson=flash_card_lesson,
