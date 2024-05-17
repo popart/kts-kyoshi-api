@@ -109,6 +109,8 @@ def chat():
     user_id = user_handler.get_user_id(DB_ENGINE, current_user_sub)
     assert user_id is not None
 
+    # TODO: assert chat_id matches user_id
+
     if flask.request.method == "GET":
         return flask.jsonify(chat_handler.get_chats(engine=DB_ENGINE, user_id=user_id))
 
@@ -129,6 +131,8 @@ def chat_message(chat_id):
 
     user_id = user_handler.get_user_id(DB_ENGINE, current_user_sub)
     assert user_id is not None
+
+    # TODO: assert chat_id matches user_id
 
     chat_messages = chat_handler.get_chat_messages(
         engine=DB_ENGINE, user_id=user_id, chat_id=chat_id

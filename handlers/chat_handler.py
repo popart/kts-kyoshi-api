@@ -39,6 +39,7 @@ def get_chat_messages(
 ) -> list[chat_types.ChatMessage]:
     stmt = (
         select(db_models.ChatMessage.content)
+        .where(db_models.ChatMessage.user_id == user_id)
         .where(db_models.ChatMessage.chat_id == chat_id)
         .order_by(desc(db_models.ChatMessage.created_at))
         .limit(10)

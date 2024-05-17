@@ -19,7 +19,8 @@ logger.setLevel(logging.INFO)
 
 
 class OpenAIChatClient(AbstractChatClient):
-    MODEL = "gpt-4o"
+    MODEL = "gpt-4o"  # breaks sentence into shorter pieces, skips some grammar
+    #MODEL = "gpt-4-turbo"  # handles the full sentence, longer chunks of vocab/grammar
     MAX_TOKENS = 1500
 
     def __init__(self):
