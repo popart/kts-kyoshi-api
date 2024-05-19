@@ -3,13 +3,14 @@ import logging
 import os
 import sys
 import uuid
+from dataclasses import asdict
 
 import flask
 import flask_cors
 from sqlalchemy import create_engine
 from werkzeug.wrappers.response import Response
 
-from prompts.prompt_flashcards import get_prompt_flashcards
+from prompts.prompt_flash_cards import get_prompt_flash_cards
 from clients.chat.openai_chat_client import OpenAIChatClient
 from clients.chat.fake_chat_client import FakeChatClient
 from data_types import chat_types, chat_response_types
@@ -42,7 +43,7 @@ if ENV == "PROD":
     CHAT_CLIENT = OpenAIChatClient()
 else:
     CHAT_CLIENT = FakeChatClient(response_type=os.getenv("CHAT_TYPE", "CHAT"))
-PROMPT_FLASHCARDS = get_prompt_flashcards(CHAT_CLIENT)
+PROMPT_FLASHCARDS = get_prompt_flash_cards(CHAT_CLIENT)
 CHATS: dict[str, list[chat_types.ChatMessage]] = {}
 DB_ENGINE = create_engine(
     "postgresql+psycopg://postgres:mypassword@localhost:5432/kyoshi"
@@ -95,7 +96,6 @@ def check_login():
 @app.route("/logout", methods=["POST"])
 def logout():
     flask.session.clear()  # This clears the entire session
-    print("logged out")
     return flask.jsonify({"message": "Logged out successfully"}), 200
 
 
@@ -134,15 +134,22 @@ def chat_message(chat_id):
 
     # TODO: assert chat_id matches user_id
 
-    chat_messages = chat_handler.get_chat_messages(
+    # chat_message_data: list(tuple(UUID, flash_card_indexes[], content{}))
+    chat_messages_data = chat_handler.get_chat_messages(
         engine=DB_ENGINE, user_id=user_id, chat_id=chat_id
     )
 
     if flask.request.method == "GET":
         return [
-            chat_response_types.chat_message_to_chat_message_response(cm)
-            for cm in chat_messages
+            chat_response_types.chat_message_to_chat_message_response(
+                chat_message_id=cmd[0],
+                chat_message=cmd[1],
+                saved_flash_card_indexes=cmd[2],
+            ) for cmd in chat_messages_data
         ]
+
+    # data to send to openAI
+    chat_messages = [cmd[1] for cmd in chat_messages_data]
 
     data = flask.request.json
     message = data.get("message") if data else None
@@ -155,7 +162,7 @@ def chat_message(chat_id):
     input_messages = chat_messages[CHAT_LOOKBACK:].copy()
     input_messages.append(new_chat_message)
 
-    # first get flashcards messages (openAI format)
+    # first get flash_cards messages (openAI format)
     try:
         output_message = PROMPT_FLASHCARDS.fetch(input_messages)
 
@@ -173,14 +180,83 @@ def chat_message(chat_id):
         logger.error(e, exc_info=True)
         flask.abort(Response("Couldn't handle that message", 404))
 
-    return Response({"status": "SUCCESS"}, 200)
+    return flask.jsonify({"status": "SUCCESS"}), 200
 
 
-@app.route("/flashcard/<chat_id>/<card_index>", methods=["POST"])
-def save_flashcard(chat_id, card_index):
-    """Fetches the chat from the db, and generates a flashcard from the given index"""
-    pass
+@app.route("/flash_card/<chat_id>/<chat_message_id>/<flash_card_index>", methods=["POST"])
+def create_flash_card(chat_id, chat_message_id, flash_card_index):
+    """Fetches the chat from the db, and generates a flash_card from the given index"""
+    current_user_sub = flask.session.get("openid_sub")
+    if not current_user_sub:
+        flask.abort(Response("Please log in", 401))
 
+    try:
+        chat_id = uuid.UUID(chat_id)
+        chat_message_id = uuid.UUID(chat_message_id)
+    except ValueError:
+        flask.abort(Response("Not a valid id", 404))
+
+    try:
+        user_id = user_handler.get_user_id(DB_ENGINE, current_user_sub)
+        assert user_id is not None
+
+        chat_message = chat_handler.get_chat_message(
+            engine=DB_ENGINE, user_id=user_id, chat_id=chat_id, chat_message_id=chat_message_id
+        )
+        assert chat_message is not None
+
+        chat_message_response = chat_response_types.chat_message_to_chat_message_response(chat_message)
+        assert (chat_message_response.flash_card_lesson is not None
+                and 0 <= flash_card_index < len(chat_message_response.flash_card_lesson))
+        flash_card = chat_message_response.flash_card_lesson[flash_card_index]
+
+        # write to db
+        flash_card_handler.create_flash_card(
+            engine=PG_ENGINE,
+            user_id=user_id,
+            chat_id=chat_id,
+            chat_message_id=chat_message_id,
+            flash_card_index=flash_card_index,
+            flash_card_lesson=chat_message_response.flash_card_lesson,
+            flash_card=flash_card,
+        )
+    except AssertionError:
+        flask.abort(Response("Invalid request", 404))
+
+    return flask.jsonify({"status": "SUCCESS"}), 200
+
+@app.route("/flash_cards", methods=["POST"])
+def get_flash_cards():
+    """Fetches all flash_cards with the new state"""
+    current_user_sub = flask.session.get("openid_sub")
+    if not current_user_sub:
+        flask.abort(Response("Please log in", 401))
+
+    try:
+        user_id = user_handler.get_user_id(DB_ENGINE, current_user_sub)
+        assert user_id is not None
+
+        data = flask.request.json
+        assert data is not None
+
+        status = data.get("status")
+        assert status is not None
+
+
+        if status == "NEW":
+            cards = flash_card_handler.get_flash_cards_new(PG_ENGINE, user_id)
+        elif status == "REVIEW":
+            cards = flash_card_handler.get_flash_cards_review(PG_ENGINE, user_id)
+        elif status == "ALL":
+            cards = flash_card_handler.get_flash_cards_all(PG_ENGINE, user_id)
+        else:
+            flask.abort(Response("Invalid status", 404))
+    except AssertionError:
+        flask.abort(Response("Invalid request", 404))
+
+    cards_reponse = [flash_card_types.flash_card_to_flash_card_response(card) for card in cards]
+
+    return flask.jsonify(cards), 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5555, debug=True)

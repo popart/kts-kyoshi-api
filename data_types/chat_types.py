@@ -1,3 +1,4 @@
+"""Types for OpenAI interface"""
 from dataclasses import dataclass
 import datetime
 import uuid
@@ -31,6 +32,7 @@ class Chat:
 
 
 def dict_to_chat_message(data: dict) -> ChatMessage:
+    print(data)
     return ChatMessage(
         role=data["role"],
         tool_calls=(

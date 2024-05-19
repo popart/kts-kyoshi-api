@@ -5,41 +5,41 @@ from clients.chat.abstract_chat_client import AbstractChatClient
 from prompts.prompt import Prompt
 
 
-role = """You are a Japanese grammar explainer for English speaking students. You have two jobs:
-1a) When User gives you a sentence in Japanese, convert it into a JSON list of flash cards. Each flash card will the `japanese_example`, i.e. the word as conjugated in the sentence, the `dictionary_form`, i.e. the word as you would find it in a japanese dictionary, and `teaching_notes`, i.e. explanations of grammar points and other pedantically useful knowledge. Call the create_japanese_flashcards() function and pass in the JSON list of flashcards as an argument. Make sure you close all parenthesis and brackets in your arguments.
+role = """You are Kyoshi, a Japanese tutor for English speaking students. You have two jobs:
+1a) When User gives you a sentence in Japanese, convert it into a JSON list of flash cards. Each flash card will contain the `japanese_example`, i.e. the word as conjugated in the sentence, the `dictionary_form`, i.e. the word as you would find it in a japanese dictionary, and `teaching_notes`, i.e. explanations of vocab, grammar points, and other pedantically useful knowledge. Call the create_japanese_flash_cards() function and pass in the JSON list of flash_cards as an argument. Make sure you close all parenthesis and brackets in your arguments.
 1b) After creating the flash cards, add a translation for the overall meaning of the sentence.
-2) If User asks you a question in English, answer their question if it relates to Japanese. If the question is irrelevant just reply with an ellipsis (...)"""
+2) If User asks you a language question, answer their question if it relates to Japanese. In general you should treat all Japanese messages as translation requests. If a question is irrelevant to language study just reply with an ellipsis (...)."""
 
 tools = [
     {
         "type": "function",
         "function": {
-            "name": "create_japanese_flashcards",
-            "description": "Saves a list of japanese_flash_cards. Each item in the list explains a vocab or grammar teaching point from the input sentence.",
+            "name": "create_japanese_flash_cards",
+            "description": "Saves a list of japanese_flash_cards. Each item in the list explains a vocab or grammar teaching point from the input sentence. Cards cover all but the most basic grammar and vocabulary.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "input_text": {
                         "type": "string",
-                        "description": "the original input, with typos corrected",
+                        "description": "The original input. Typos that cannot be attributed to vernacular speech are corrected.",
                     },
                     "japanese_flash_cards": {
                         "type": "array",
-                        "description": "A list of flash card objects.",
+                        "description": "A comprehensive list of flash card objects, explaining each grammar and vocab point in the input_text.",
                         "items": {
                             "type": "object",
                             "properties": {
                                 "japanese_example": {
                                     "type": "string",
-                                    "description": "the vocab or grammar point as written and conjugated in the input text, without changes. pronunciation is appended in parenthesis.",
+                                    "description": "The vocab or grammar point as written and conjugated in the input_text, without changes. Each kanji or 熟語 is followed by its pronunciation in parenthesis.",
                                 },
                                 "dictionary_form": {
                                     "type": "string",
-                                    "description": "For vocab words, the vocab word in its dictionary, root form, in its most commonly seen writing variant. pronunciation is appended in parenthesis.",
+                                    "description": "For vocab words, the vocab word in its root, dictionary form (i.e. its 辞書形), in its most commonly seen writing variant. Each kanji or 熟語 is followed by its pronunciation in parenthesis.",
                                 },
                                 "teaching_notes": {
                                     "type": "string",
-                                    "description": "Explanation of grammar, including conjugation & colloqualisms. For shortened spoken forms, expands the form to its full originating phrase",
+                                    "description": "Explanation of grammar, including conjugation & colloqualisms. For shortened spoken forms, expands the form to its full originating phrase.",
                                 },
                                 "jlpt_level": {
                                     "type": "string",
@@ -80,7 +80,7 @@ examples.append(
                             "japanese_flash_cards": [
                                 {
                                     "japanese_example": "しょうがない",
-                                    "dictionary_form": "仕方がない(しかたがない)",
+                                    "dictionary_form": "仕(し)方(かた)がない",
                                     "teaching_notes": "Expression: 'It can't be helped' or 'nothing can be done about it.' Often used to express resignation or acceptance of a situation. A contraction where '仕方' means 'method' or 'way,' and 'がない' means 'there is none.'",
                                     "jlpt_level": "N4",
                                 },
@@ -92,14 +92,13 @@ examples.append(
                                 },
                                 {
                                     "japanese_example": "いこう",
-                                    "dictionary_form": "行く(いく)",
+                                    "dictionary_form": "行(い)く",
                                     "teaching_notes": "Verb: volitional form of the verb '行く' (to go), used to express a decision or suggestion about the future, equivalent to saying 'let's go' in English.",
                                     "jlpt_level": "N5",
                                 },
                             ],
                             "translated_text": "It can't be helped, let's go with that.",
                         },
-                        ensure_ascii=False,
                     ),
                 ),
             )
@@ -127,7 +126,7 @@ examples.append(
                             "input_text": "お前が近所からどう言われてるか、知らない訳じゃないだろ！",
                             "japanese_flash_cards": [
                                 {
-                                    "dictionary_form": "お前(おまえ)",
+                                    "dictionary_form": "お前(まえ)",
                                     "japanese_example": "お前(おまえ)",
                                     "jlpt_level": "N5",
                                     "teaching_notes": "Pronoun: 'you.' Informal and can "
@@ -137,8 +136,8 @@ examples.append(
                                     "or familiar contexts.",
                                 },
                                 {
-                                    "dictionary_form": "近所(きんじょ)",
-                                    "japanese_example": "近所(きんじょ)",
+                                    "dictionary_form": "近(きん)所(じょ)",
+                                    "japanese_example": "近(きん)所(じょ)",
                                     "jlpt_level": "N5",
                                     "teaching_notes": "Noun: 'neighborhood' or "
                                     "'vicinity.' Refers to the "
@@ -146,8 +145,8 @@ examples.append(
                                     "living place.",
                                 },
                                 {
-                                    "dictionary_form": "どう言う(どういう)",
-                                    "japanese_example": "どう言われてる(どういわれてる)",
+                                    "dictionary_form": "どう言(い)う",
+                                    "japanese_example": "どう言(い)われてる",
                                     "jlpt_level": "N3",
                                     "teaching_notes": "Expression: 'how is it said.' "
                                     "This is a passive construction "
@@ -156,8 +155,8 @@ examples.append(
                                     "or something in general terms.",
                                 },
                                 {
-                                    "dictionary_form": "知る(しる)",
-                                    "japanese_example": "知らない訳じゃない(しらないわけじゃない)",
+                                    "dictionary_form": "知(し)る",
+                                    "japanese_example": "知(し)らない訳(わけ)じゃない",
                                     "jlpt_level": "N3",
                                     "teaching_notes": "Expression: 'it's not that I "
                                     "don't know.' A double negative "
@@ -179,7 +178,28 @@ examples.append(
                             ],
                             "translated_text": "You know what the neighborhood says about you, right?",
                         },
-                        ensure_ascii=False,
+                    ),
+                ),
+            )
+        ],
+    )
+)
+
+# Example 3
+examples.append(
+    chat_types.ChatMessage(role="user", content="世界電気通信および情報社会の日")
+)
+examples.append(
+    chat_types.ChatMessage(
+        role="assistant",
+        tool_calls=[
+            chat_types.ToolCall(
+                id="call_001",
+                type="function",
+                function=chat_types.Function(
+                    name="save_japanese_vocab_words",
+                    arguments=json.dumps(
+                        {'input_text': '世界電気通信および情報社会の日', 'japanese_flash_cards': [{'japanese_example': '世界(せかい)', 'dictionary_form': '世界(せかい)', 'teaching_notes': "Noun: 'world.' Refers to the entire globe or the realm of human existence.", 'jlpt_level': 'N5'}, {'japanese_example': '電気通信(でんきつうしん)', 'dictionary_form': '電(でん)気(き)通(つう)信(しん)', 'teaching_notes': "Noun: 'telecommunications.' Refers to the transmission of information over significant distances by electronic means. Composed of 電気, electricity, and 通信, meaning correspondence or communication.", 'jlpt_level': 'N2'}, {'japanese_example': 'および', 'dictionary_form': 'および', 'teaching_notes': "Conjunction: 'and' or 'as well as.' Used to connect words or phrases of equal importance.", 'jlpt_level': 'N2'}, {'japanese_example': '情報社会(じょうほうしゃかい)', 'dictionary_form': '情(じょう)報(ほう)社(しゃ)会(かい)', 'teaching_notes': "Noun: 'information society.' Refers to a society where the creation, distribution, and manipulation of information is a significant economic, political, and cultural activity. Composed of 情報, information, and 社会, society.", 'jlpt_level': 'N2'}, {'japanese_example': 'の', 'dictionary_form': 'の', 'teaching_notes': "Particle: Possessive particle used to indicate possession or association, similar to 'of' in English.", 'jlpt_level': 'N5'}, {'japanese_example': '日(ひ)', 'dictionary_form': '日(ひ)', 'teaching_notes': "Noun: 'day.' Refers to a specific day or date.", 'jlpt_level': 'N5'}], 'translated_text': 'World Telecommunication and Information Society Day'},
                     ),
                 ),
             )
@@ -188,5 +208,5 @@ examples.append(
 )
 
 
-def get_prompt_flashcards(chat_client: AbstractChatClient):
+def get_prompt_flash_cards(chat_client: AbstractChatClient):
     return Prompt(chat_client=chat_client, role=role, tools=tools, examples=examples)

@@ -1,6 +1,8 @@
+"""Types for API interface"""
 from dataclasses import dataclass
 import enum
 import json
+import uuid
 
 from data_types import chat_types
 
@@ -17,6 +19,7 @@ class FlashCard:
     dictionary_form: str | None
     teaching_notes: str | None
     jlpt_level: str | None
+    is_saved: bool = False
 
 
 @dataclass
@@ -28,6 +31,7 @@ class FlashCardLesson:
 
 @dataclass
 class ChatMessageResponse:
+    chat_message_id: uuid.UUID
     role: str
     message_type: ChatMessageResponseType
     message: str | None
@@ -35,7 +39,9 @@ class ChatMessageResponse:
 
 
 def chat_message_to_chat_message_response(
+    chat_message_id: uuid.UUID,
     chat_message: chat_types.ChatMessage,
+    saved_flash_card_indexes: list[int],
 ) -> ChatMessageResponse:
     flash_card_lesson = None
     message_type = ChatMessageResponseType.UNDEFINED
@@ -45,6 +51,7 @@ def chat_message_to_chat_message_response(
     elif chat_message.tool_calls:
         message_type = ChatMessageResponseType.FLASH_CARD_LESSON
         fn_args = json.loads(chat_message.tool_calls[0].function.arguments)
+        print(fn_args)
 
         flash_cards = [
             FlashCard(
@@ -56,6 +63,9 @@ def chat_message_to_chat_message_response(
             for card in fn_args.get("japanese_flash_cards", [])
         ]
 
+        for i in saved_flash_card_indexes:
+            flash_cards[i].is_saved = True
+
         flash_card_lesson = FlashCardLesson(
             input_text=fn_args.get("input_text", ""),
             translated_text=fn_args.get("translated_text", ""),
@@ -63,6 +73,7 @@ def chat_message_to_chat_message_response(
         )
 
     return ChatMessageResponse(
+        chat_message_id=chat_message_id,
         role=chat_message.role,
         message_type=message_type,
         message=chat_message.content,

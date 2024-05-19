@@ -2,3 +2,4 @@
 
 from db_models.user import *
 from db_models.chat import *
+from db_models.flash_card import *
