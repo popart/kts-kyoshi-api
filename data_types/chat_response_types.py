@@ -31,6 +31,7 @@ class FlashCardLesson:
 
 @dataclass
 class ChatMessageResponse:
+    chat_id: uuid.UUID
     chat_message_id: uuid.UUID
     role: str
     message_type: ChatMessageResponseType
@@ -39,9 +40,10 @@ class ChatMessageResponse:
 
 
 def chat_message_to_chat_message_response(
+    chat_id: uuid.UUID,
     chat_message_id: uuid.UUID,
     chat_message: chat_types.ChatMessage,
-    saved_flash_card_indexes: list[int],
+    saved_flash_card_indexes: list[int] = None,
 ) -> ChatMessageResponse:
     flash_card_lesson = None
     message_type = ChatMessageResponseType.UNDEFINED
@@ -63,8 +65,9 @@ def chat_message_to_chat_message_response(
             for card in fn_args.get("japanese_flash_cards", [])
         ]
 
-        for i in saved_flash_card_indexes:
-            flash_cards[i].is_saved = True
+        if saved_flash_card_indexes:
+            for i in saved_flash_card_indexes:
+                flash_cards[i].is_saved = True
 
         flash_card_lesson = FlashCardLesson(
             input_text=fn_args.get("input_text", ""),
@@ -73,6 +76,7 @@ def chat_message_to_chat_message_response(
         )
 
     return ChatMessageResponse(
+        chat_id=chat_id,
         chat_message_id=chat_message_id,
         role=chat_message.role,
         message_type=message_type,

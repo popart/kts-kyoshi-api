@@ -2,7 +2,7 @@
 
 import uuid
 
-from sqlalchemy import Column, Integer, DateTime, DefaultClause, JSON
+from sqlalchemy import Boolean, Column, Integer, DateTime, DefaultClause, JSON, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
@@ -33,3 +33,4 @@ class FlashCard(Base):
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+    is_active = Column(Boolean, nullable=False, server_default=text('TRUE'))

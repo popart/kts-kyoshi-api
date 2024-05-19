@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import uuid
 
+import db_models
+
 @dataclass
 class FlashCardContent:
     input_text: str | None

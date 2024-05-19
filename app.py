@@ -14,7 +14,7 @@ from prompts.prompt_flash_cards import get_prompt_flash_cards
 from clients.chat.openai_chat_client import OpenAIChatClient
 from clients.chat.fake_chat_client import FakeChatClient
 from data_types import chat_types, chat_response_types
-from handlers import chat_handler, user_handler
+from handlers import chat_handler, user_handler, flash_card_handler
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -142,6 +142,7 @@ def chat_message(chat_id):
     if flask.request.method == "GET":
         return [
             chat_response_types.chat_message_to_chat_message_response(
+                chat_id=chat_id,
                 chat_message_id=cmd[0],
                 chat_message=cmd[1],
                 saved_flash_card_indexes=cmd[2],
@@ -184,7 +185,7 @@ def chat_message(chat_id):
 
 
 @app.route("/flash_card/<chat_id>/<chat_message_id>/<flash_card_index>", methods=["POST"])
-def create_flash_card(chat_id, chat_message_id, flash_card_index):
+def create_or_update_flash_card(chat_id, chat_message_id, flash_card_index):
     """Fetches the chat from the db, and generates a flash_card from the given index"""
     current_user_sub = flask.session.get("openid_sub")
     if not current_user_sub:
@@ -193,8 +194,13 @@ def create_flash_card(chat_id, chat_message_id, flash_card_index):
     try:
         chat_id = uuid.UUID(chat_id)
         chat_message_id = uuid.UUID(chat_message_id)
+        flash_card_index = int(flash_card_index)
     except ValueError:
         flask.abort(Response("Not a valid id", 404))
+
+    data = flask.request.json
+    save = data.get("save") if data else None
+    assert save is not None
 
     try:
         user_id = user_handler.get_user_id(DB_ENGINE, current_user_sub)
@@ -205,25 +211,31 @@ def create_flash_card(chat_id, chat_message_id, flash_card_index):
         )
         assert chat_message is not None
 
-        chat_message_response = chat_response_types.chat_message_to_chat_message_response(chat_message)
+        chat_message_response = chat_response_types.chat_message_to_chat_message_response(
+            chat_id=chat_id,
+            chat_message_id=chat_message_id,
+            chat_message=chat_message,
+        )
+
         assert (chat_message_response.flash_card_lesson is not None
-                and 0 <= flash_card_index < len(chat_message_response.flash_card_lesson))
-        flash_card = chat_message_response.flash_card_lesson[flash_card_index]
+                and 0 <= flash_card_index < len(chat_message_response.flash_card_lesson.flash_cards))
+        flash_card = chat_message_response.flash_card_lesson.flash_cards[flash_card_index]
 
         # write to db
-        flash_card_handler.create_flash_card(
-            engine=PG_ENGINE,
+        flash_card_handler.create_or_update_flash_card(
+            engine=DB_ENGINE,
             user_id=user_id,
             chat_id=chat_id,
             chat_message_id=chat_message_id,
             flash_card_index=flash_card_index,
             flash_card_lesson=chat_message_response.flash_card_lesson,
             flash_card=flash_card,
+            is_active=save,
         )
     except AssertionError:
         flask.abort(Response("Invalid request", 404))
 
-    return flask.jsonify({"status": "SUCCESS"}), 200
+    return flask.jsonify({"status": "SUCCESS", "save": save}), 200
 
 @app.route("/flash_cards", methods=["POST"])
 def get_flash_cards():

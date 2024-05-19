@@ -42,8 +42,10 @@ def get_chat_messages(
     stmt_sub = (
         select(db_models.ChatMessage.chat_message_id,
                func.array_agg(db_models.FlashCard.flash_card_index).label("saved_flash_card_indexes"))
-        .outerjoin(db_models.FlashCard,
-              db_models.ChatMessage.chat_message_id == db_models.FlashCard.chat_message_id)
+        .outerjoin(
+            db_models.FlashCard,
+            (db_models.ChatMessage.chat_message_id == db_models.FlashCard.chat_message_id)
+            & (db_models.FlashCard.is_active))
         .where(db_models.ChatMessage.user_id == user_id)
         .where(db_models.ChatMessage.chat_id == chat_id)
         .group_by(db_models.ChatMessage.chat_message_id)
@@ -74,10 +76,10 @@ def get_chat_message(
         .where(db_models.ChatMessage.user_id == user_id)
         .where(db_models.ChatMessage.chat_id == chat_id)
         .where(db_models.ChatMessage.chat_message_id == chat_message_id)
-        .first()
     )
     with Session(engine) as session:
-        return session.query(stmt)
+        res = session.execute(stmt).scalar_one_or_none()
+        return chat_types.dict_to_chat_message(res) if res else None
 
 def save_chat_messages(
     engine: Engine,
