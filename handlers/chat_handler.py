@@ -50,7 +50,7 @@ def get_chat_messages(
         .where(db_models.ChatMessage.chat_id == chat_id)
         .group_by(db_models.ChatMessage.chat_message_id)
         .order_by(desc(db_models.ChatMessage.created_at))
-        .limit(10)
+        .limit(100)
     ).alias("stmt_sub")
 
     # then add on the content

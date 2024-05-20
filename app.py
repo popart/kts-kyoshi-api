@@ -150,7 +150,10 @@ def chat_message(chat_id):
         ]
 
     # data to send to openAI
-    chat_messages = [cmd[1] for cmd in chat_messages_data]
+    # fetch most recent messages (the first X in date desc)
+    input_messages = [cmd[1] for cmd in chat_messages_data[:CHAT_LOOKBACK]]
+    # reverse back into chronological order
+    input_messages.reverse()
 
     data = flask.request.json
     message = data.get("message") if data else None
@@ -159,8 +162,6 @@ def chat_message(chat_id):
         role="user",
         content=message,
     )
-
-    input_messages = chat_messages[CHAT_LOOKBACK:].copy()
     input_messages.append(new_chat_message)
 
     # first get flash_cards messages (openAI format)
