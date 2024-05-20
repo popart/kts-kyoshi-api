@@ -13,7 +13,7 @@ from werkzeug.wrappers.response import Response
 from prompts.prompt_flash_cards import get_prompt_flash_cards
 from clients.chat.openai_chat_client import OpenAIChatClient
 from clients.chat.fake_chat_client import FakeChatClient
-from data_types import chat_types, chat_response_types
+from data_types import chat_types, chat_response_types, flash_card_types
 from handlers import chat_handler, user_handler, flash_card_handler
 
 from google.oauth2 import id_token
@@ -238,8 +238,8 @@ def create_or_update_flash_card(chat_id, chat_message_id, flash_card_index):
 
     return flask.jsonify({"status": "SUCCESS", "save": save}), 200
 
-@app.route("/flash_cards", methods=["POST"])
-def get_flash_cards():
+@app.route("/flash_cards/<flash_card_status>", methods=["GET"])
+def get_flash_cards(flash_card_status: str):
     """Fetches all flash_cards with the new state"""
     current_user_sub = flask.session.get("openid_sub")
     if not current_user_sub:
@@ -249,27 +249,23 @@ def get_flash_cards():
         user_id = user_handler.get_user_id(DB_ENGINE, current_user_sub)
         assert user_id is not None
 
-        data = flask.request.json
-        assert data is not None
+        assert flash_card_status is not None
+        flash_card_status = flash_card_status.upper()
 
-        status = data.get("status")
-        assert status is not None
-
-
-        if status == "NEW":
-            cards = flash_card_handler.get_flash_cards_new(PG_ENGINE, user_id)
-        elif status == "REVIEW":
-            cards = flash_card_handler.get_flash_cards_review(PG_ENGINE, user_id)
-        elif status == "ALL":
-            cards = flash_card_handler.get_flash_cards_all(PG_ENGINE, user_id)
+        if flash_card_status == "NEW":
+            cards = flash_card_handler.get_flash_cards_new(DB_ENGINE, user_id)
+        elif flash_card_status == "REVIEW":
+            cards = flash_card_handler.get_flash_cards_review(DB_ENGINE, user_id)
+        elif flash_card_status == "ALL":
+            cards = flash_card_handler.get_flash_cards_all(DB_ENGINE, user_id)
         else:
             flask.abort(Response("Invalid status", 404))
     except AssertionError:
         flask.abort(Response("Invalid request", 404))
 
-    cards_reponse = [flash_card_types.flash_card_to_flash_card_response(card) for card in cards]
+    cards_response = [flash_card_types.flash_card_to_flash_card_response(card) for card in cards]
 
-    return flask.jsonify(cards), 200
+    return flask.jsonify(cards_response), 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5555, debug=True)

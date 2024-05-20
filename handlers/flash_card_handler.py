@@ -56,25 +56,28 @@ def create_or_update_flash_card(
         session.commit()
 
 def get_flash_cards_new(engine: Engine, user_id: uuid.UUID):
+    # TODO: paginate
     stmt = (
         select(db_models.FlashCard)
         .where(db_models.FlashCard.user_id == user_id)
-        .where(db_models.FlashCard.fsrs_state == fsrs.state.New.value)
+        .where(db_models.FlashCard.fsrs_state == fsrs.State.New.value)
         .order_by(db_models.FlashCard.created_at)
+        .limit(100)
     )
     with Session(engine) as session:
-        return session.execute(stmt).fetchall()
+        return [row[0] for row in session.execute(stmt).fetchall()]
 
 
 def get_flash_cards_review(engine: Engine, user_id: uuid.UUID):
     stmt = (
         select(db_models.FlashCard)
         .where(db_models.FlashCard.user_id == user_id)
-        .where(db_models.FlashCard.fsrs_state > fsrs.state.New.value)
+        .where(db_models.FlashCard.fsrs_state > fsrs.State.New.value)
         .order_by(db_models.FlashCard.created_at)
+        .limit(10)
     )
     with Session(engine) as session:
-        return session.execute(stmt).fetchall()
+        return [row[0] for row in session.execute(stmt).fetchall()]
 
 def get_flash_cards_all(engine: Engine, user_id: uuid.UUID):
     """ TODO: paginate """
@@ -85,4 +88,4 @@ def get_flash_cards_all(engine: Engine, user_id: uuid.UUID):
         .limit(100)
     )
     with Session(engine) as session:
-        return session.execute(stmt).fetchall()
+        return [row[0] for row in session.execute(stmt).fetchall()]
