@@ -55,6 +55,36 @@ def create_or_update_flash_card(
         session.add(instance)
         session.commit()
 
+def review_flash_card(
+        engine: Engine,
+        user_id: uuid.UUID,
+        flash_card_id: uuid.UUID,
+        rating: str,
+    ):
+
+    with Session(engine) as session:
+        stmt = (
+            select(db_models.FlashCard)
+            .where(db_models.FlashCard.flash_card_id == flash_card_id)
+            .where(db_models.FlashCard.user_id == user_id)
+        )
+        flash_card = session.execute(stmt).scalar_one_or_none()
+        assert flash_card is not None
+
+        if rating == "ADD_TO_REVIEW" and flash_card.fsrs_state == fsrs.State.New.value:
+            flash_card.fsrs_state = fsrs.State.Review.value
+        else:
+            f = fsrs.FSRS()
+            fsrs_card = fsrs.Card.from_dict(flash_card.fsrs_card)
+            scheduling_cards = f.repeat(fsrs_card, datetime.now())
+            new_card = scheduling_cards[fsrs.Rating[rating]]
+
+            flash_card.fsrs_card = new_card
+            flash_card.fsrs_due_at = new_card.due
+            flash_card.fsrs_state = new_card.state
+
+        session.commit()
+
 def get_flash_cards_new(engine: Engine, user_id: uuid.UUID):
     # TODO: paginate
     stmt = (

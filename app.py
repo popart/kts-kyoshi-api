@@ -185,6 +185,37 @@ def chat_message(chat_id):
     return flask.jsonify({"status": "SUCCESS"}), 200
 
 
+@app.route("/review_flash_card/<flash_card_id>", methods=["POST"])
+def review_flash_card(flash_card_id):
+    """ Updates a flash card after review"""
+    current_user_sub = flask.session.get("openid_sub")
+    if not current_user_sub:
+        flask.abort(Response("Please log in", 401))
+
+    try:
+        flash_card_id = uuid.UUID(flash_card_id)
+    except ValueError:
+        flask.abort(Response("Not a valid id", 404))
+
+    data = flask.request.json
+    rating = data.get("rating") if data else None
+    assert rating is not None
+
+    try:
+        user_id = user_handler.get_user_id(DB_ENGINE, current_user_sub)
+        assert user_id is not None
+
+        flash_card = flash_card_handler.review_flash_card(
+            engine=DB_ENGINE,
+            user_id=user_id,
+            flash_card_id=flash_card_id,
+            rating=rating,
+        )
+    except AssertionError:
+        flask.abort(Response("Invalid request", 404))
+
+    return flask.jsonify({"status": "SUCCESS"}), 200
+
 @app.route("/flash_card/<chat_id>/<chat_message_id>/<flash_card_index>", methods=["POST"])
 def create_or_update_flash_card(chat_id, chat_message_id, flash_card_index):
     """Fetches the chat from the db, and generates a flash_card from the given index"""
