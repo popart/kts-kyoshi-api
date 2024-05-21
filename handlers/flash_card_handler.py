@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from dataclasses import asdict
 import uuid
 
@@ -75,9 +76,9 @@ def review_flash_card(
             flash_card.fsrs_state = fsrs.State.Review.value
         else:
             f = fsrs.FSRS()
-            fsrs_card = fsrs.Card.from_dict(flash_card.fsrs_card)
-            scheduling_cards = f.repeat(fsrs_card, datetime.now())
-            new_card = scheduling_cards[fsrs.Rating[rating]]
+            fsrs_card = fsrs.Card.from_dict(flash_card.fsrs)
+            scheduling_cards = f.repeat(fsrs_card, datetime.now(tz=timezone.utc))
+            new_card = scheduling_cards[fsrs.Rating[rating]].card
 
             flash_card.fsrs_card = new_card
             flash_card.fsrs_due_at = new_card.due
@@ -103,7 +104,8 @@ def get_flash_cards_review(engine: Engine, user_id: uuid.UUID):
         select(db_models.FlashCard)
         .where(db_models.FlashCard.user_id == user_id)
         .where(db_models.FlashCard.fsrs_state > fsrs.State.New.value)
-        .order_by(db_models.FlashCard.created_at)
+        .where(db_models.FlashCard.fsrs_due_at < datetime.now(tz=timezone.utc))
+        .order_by(db_models.FlashCard.fsrs_due_at)
         .limit(10)
     )
     with Session(engine) as session:
