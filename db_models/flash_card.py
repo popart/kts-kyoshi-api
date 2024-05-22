@@ -20,7 +20,8 @@ class FlashCard(Base):
     flash_card_index = Column(Integer, nullable=False)
 
     content = Column(JSON, nullable=False)
-        
+    jlpt_level = Column(Integer, nullable=False, server_default=DefaultClause("-1"))
+
     # FSRS data, contains all info for fsrs.Card.to_dict()
     fsrs = Column(JSON, nullable=False)
     # FSRS due date, for querying cards that are due
@@ -28,9 +29,9 @@ class FlashCard(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     # FSRS state, for querying NEW cards etc
-    fsrs_state = Column(Integer, nullable=False, server_default=DefaultClause('0'))
+    fsrs_state = Column(Integer, nullable=False, server_default=DefaultClause("0"))
 
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
-    is_active = Column(Boolean, nullable=False, server_default=text('TRUE'))
+    is_active = Column(Boolean, nullable=False, server_default=text("TRUE"))

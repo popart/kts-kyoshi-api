@@ -26,6 +26,10 @@ def create_or_update_flash_card(
         teaching_notes=flash_card.teaching_notes,
         jlpt_level=flash_card.jlpt_level,
     ))
+    try:
+        jlpt_level = flash_card_types.JLPTLevel[flash_card.jlpt_level].value
+    except KeyError:
+        jlpt_level = flash_card_types.JLPTLevel.UNKNOWN.value
 
     fsrs_card = fsrs.Card()
 
@@ -48,6 +52,7 @@ def create_or_update_flash_card(
                 chat_message_id=chat_message_id,
                 flash_card_index=flash_card_index,
                 content=content,
+                jlpt_level=jlpt_level,
                 fsrs=fsrs_card.to_dict(),
                 fsrs_due_at=fsrs_card.due,
                 fsrs_state=fsrs_card.state.value,
@@ -92,6 +97,7 @@ def get_flash_cards_new(engine: Engine, user_id: uuid.UUID):
         select(db_models.FlashCard)
         .where(db_models.FlashCard.user_id == user_id)
         .where(db_models.FlashCard.fsrs_state == fsrs.State.New.value)
+        .order_by(desc(db_models.FlashCard.jlpt_level))
         .order_by(db_models.FlashCard.created_at)
         .limit(100)
     )

@@ -1,7 +1,7 @@
 from functools import lru_cache
 import uuid
 
-from sqlalchemy import desc, exists, select, Engine
+from sqlalchemy import exists, select, Engine
 from sqlalchemy.orm import Session
 
 import db_models
