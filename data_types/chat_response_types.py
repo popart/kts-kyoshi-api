@@ -1,4 +1,5 @@
 """Types for API interface"""
+
 from dataclasses import dataclass
 import enum
 import json

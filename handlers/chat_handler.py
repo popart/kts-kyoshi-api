@@ -33,6 +33,7 @@ def get_chats(engine: Engine, user_id: uuid.UUID) -> list[db_models.Chat]:
             for c in session.scalars(stmt)
         ]
 
+
 def delete_chat(engine: Engine, user_id: uuid.UUID, chat_id: uuid.UUID):
     stmt = (
         select(db_models.Chat)
@@ -52,12 +53,20 @@ def get_chat_messages(
     # first aggregate the saved_flash_card_indexes
     # (used to show which flash_card items have already been created)
     stmt_sub = (
-        select(db_models.ChatMessage.chat_message_id,
-               func.array_agg(db_models.FlashCard.flash_card_index).label("saved_flash_card_indexes"))
+        select(
+            db_models.ChatMessage.chat_message_id,
+            func.array_agg(db_models.FlashCard.flash_card_index).label(
+                "saved_flash_card_indexes"
+            ),
+        )
         .outerjoin(
             db_models.FlashCard,
-            (db_models.ChatMessage.chat_message_id == db_models.FlashCard.chat_message_id)
-            & (db_models.FlashCard.is_active))
+            (
+                db_models.ChatMessage.chat_message_id
+                == db_models.FlashCard.chat_message_id
+            )
+            & (db_models.FlashCard.is_active),
+        )
         .where(db_models.ChatMessage.user_id == user_id)
         .where(db_models.ChatMessage.chat_id == chat_id)
         .group_by(db_models.ChatMessage.chat_message_id)
@@ -68,17 +77,30 @@ def get_chat_messages(
     # then add on the content
     # (done separately b/c json columns don't aggregate)
     stmt = (
-        select(stmt_sub.c.chat_message_id, db_models.ChatMessage.content, stmt_sub.c.saved_flash_card_indexes)
-        .select_from(stmt_sub.join(db_models.ChatMessage, stmt_sub.c.chat_message_id == db_models.ChatMessage.chat_message_id))
+        select(
+            stmt_sub.c.chat_message_id,
+            db_models.ChatMessage.content,
+            stmt_sub.c.saved_flash_card_indexes,
+        )
+        .select_from(
+            stmt_sub.join(
+                db_models.ChatMessage,
+                stmt_sub.c.chat_message_id == db_models.ChatMessage.chat_message_id,
+            )
+        )
         .order_by(desc(db_models.ChatMessage.created_at))
     )
     with Session(engine) as session:
         result = session.execute(stmt).fetchall()
-        return [(
-            row[0],
-            chat_types.dict_to_chat_message(row[1]),
-            [x for x in row[2] if x is not None],
-        ) for row in result]
+        return [
+            (
+                row[0],
+                chat_types.dict_to_chat_message(row[1]),
+                [x for x in row[2] if x is not None],
+            )
+            for row in result
+        ]
+
 
 def get_chat_message(
     engine: Engine, user_id: uuid.UUID, chat_id: uuid.UUID, chat_message_id: uuid.UUID
@@ -92,6 +114,7 @@ def get_chat_message(
     with Session(engine) as session:
         res = session.execute(stmt).scalar_one_or_none()
         return chat_types.dict_to_chat_message(res) if res else None
+
 
 def save_chat_messages(
     engine: Engine,

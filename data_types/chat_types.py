@@ -1,4 +1,5 @@
 """Types for OpenAI interface"""
+
 from dataclasses import dataclass
 import datetime
 import uuid

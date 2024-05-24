@@ -199,7 +199,48 @@ examples.append(
                 function=chat_types.Function(
                     name="save_japanese_vocab_words",
                     arguments=json.dumps(
-                        {'input_text': '世界電気通信および情報社会の日', 'japanese_flash_cards': [{'japanese_example': '世界(せかい)', 'dictionary_form': '世界(せかい)', 'teaching_notes': "Noun: 'world.' Refers to the entire globe or the realm of human existence.", 'jlpt_level': 'N5'}, {'japanese_example': '電気通信(でんきつうしん)', 'dictionary_form': '電(でん)気(き)通(つう)信(しん)', 'teaching_notes': "Noun: 'telecommunications.' Refers to the transmission of information over significant distances by electronic means. Composed of 電気, electricity, and 通信, meaning correspondence or communication.", 'jlpt_level': 'N2'}, {'japanese_example': 'および', 'dictionary_form': 'および', 'teaching_notes': "Conjunction: 'and' or 'as well as.' Used to connect words or phrases of equal importance.", 'jlpt_level': 'N2'}, {'japanese_example': '情報社会(じょうほうしゃかい)', 'dictionary_form': '情(じょう)報(ほう)社(しゃ)会(かい)', 'teaching_notes': "Noun: 'information society.' Refers to a society where the creation, distribution, and manipulation of information is a significant economic, political, and cultural activity. Composed of 情報, information, and 社会, society.", 'jlpt_level': 'N2'}, {'japanese_example': 'の', 'dictionary_form': 'の', 'teaching_notes': "Particle: Possessive particle used to indicate possession or association, similar to 'of' in English.", 'jlpt_level': 'N5'}, {'japanese_example': '日(ひ)', 'dictionary_form': '日(ひ)', 'teaching_notes': "Noun: 'day.' Refers to a specific day or date.", 'jlpt_level': 'N5'}], 'translated_text': 'World Telecommunication and Information Society Day'},
+                        {
+                            "input_text": "世界電気通信および情報社会の日",
+                            "japanese_flash_cards": [
+                                {
+                                    "japanese_example": "世界(せかい)",
+                                    "dictionary_form": "世界(せかい)",
+                                    "teaching_notes": "Noun: 'world.' Refers to the entire globe or the realm of human existence.",
+                                    "jlpt_level": "N5",
+                                },
+                                {
+                                    "japanese_example": "電気通信(でんきつうしん)",
+                                    "dictionary_form": "電(でん)気(き)通(つう)信(しん)",
+                                    "teaching_notes": "Noun: 'telecommunications.' Refers to the transmission of information over significant distances by electronic means. Composed of 電気, electricity, and 通信, meaning correspondence or communication.",
+                                    "jlpt_level": "N2",
+                                },
+                                {
+                                    "japanese_example": "および",
+                                    "dictionary_form": "および",
+                                    "teaching_notes": "Conjunction: 'and' or 'as well as.' Used to connect words or phrases of equal importance.",
+                                    "jlpt_level": "N2",
+                                },
+                                {
+                                    "japanese_example": "情報社会(じょうほうしゃかい)",
+                                    "dictionary_form": "情(じょう)報(ほう)社(しゃ)会(かい)",
+                                    "teaching_notes": "Noun: 'information society.' Refers to a society where the creation, distribution, and manipulation of information is a significant economic, political, and cultural activity. Composed of 情報, information, and 社会, society.",
+                                    "jlpt_level": "N2",
+                                },
+                                {
+                                    "japanese_example": "の",
+                                    "dictionary_form": "の",
+                                    "teaching_notes": "Particle: Possessive particle used to indicate possession or association, similar to 'of' in English.",
+                                    "jlpt_level": "N5",
+                                },
+                                {
+                                    "japanese_example": "日(ひ)",
+                                    "dictionary_form": "日(ひ)",
+                                    "teaching_notes": "Noun: 'day.' Refers to a specific day or date.",
+                                    "jlpt_level": "N5",
+                                },
+                            ],
+                            "translated_text": "World Telecommunication and Information Society Day",
+                        },
                     ),
                 ),
             )
