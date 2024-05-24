@@ -77,11 +77,14 @@ def login():
             user_handler.create_user(DB_ENGINE, openid_sub, openid_email)
         flask.session["openid_sub"] = openid_sub
 
-        return flask.jsonify(
-            {
-                "message": "Token is valid",
-            }
-        ), 200
+        return (
+            flask.jsonify(
+                {
+                    "message": "Token is valid",
+                }
+            ),
+            200,
+        )
 
     except ValueError as e:
         return flask.jsonify({"message": str(e)}), 400
@@ -99,8 +102,9 @@ def logout():
     return flask.jsonify({"message": "Logged out successfully"}), 200
 
 
-@app.route("/chat", methods=["GET", "POST"])
-def chat():
+@app.route("/chat", defaults={"chat_id": None}, methods=["GET", "POST", "DELETE"])
+@app.route("/chat/<chat_id>", methods=["GET", "POST", "DELETE"])
+def chat(chat_id):
     """Returns a list of chats"""
     current_user_sub = flask.session.get("openid_sub")
     if not current_user_sub:
@@ -109,13 +113,28 @@ def chat():
     user_id = user_handler.get_user_id(DB_ENGINE, current_user_sub)
     assert user_id is not None
 
-    # TODO: assert chat_id matches user_id
+    response = {}
 
+    # GET returns all chats
     if flask.request.method == "GET":
-        return flask.jsonify(chat_handler.get_chats(engine=DB_ENGINE, user_id=user_id))
+        response = chat_handler.get_chats(engine=DB_ENGINE, user_id=user_id)
 
-    chat_handler.create_chat(engine=DB_ENGINE, user_id=user_id)
-    return flask.jsonify({"status": "SUCCESS"}), 200
+    # DELETE delets a single chat
+    elif flask.request.method == "DELETE":
+        assert chat_id is not None
+        try:
+            chat_id = uuid.UUID(chat_id)
+        except ValueError:
+            flask.abort(Response("Not a valid chat id", 404))
+        chat_handler.delete_chat(engine=DB_ENGINE, user_id=user_id, chat_id=chat_id)
+        response = {"status": "SUCCESS"}
+
+    # POST creates a new chat
+    else:
+        chat_handler.create_chat(engine=DB_ENGINE, user_id=user_id)
+        response = {"status": "SUCCESS"}
+
+    return flask.jsonify(response), 200
 
 
 @app.route("/chat_message/<chat_id>", methods=["GET", "POST"])
@@ -146,7 +165,8 @@ def chat_message(chat_id):
                 chat_message_id=cmd[0],
                 chat_message=cmd[1],
                 saved_flash_card_indexes=cmd[2],
-            ) for cmd in chat_messages_data
+            )
+            for cmd in chat_messages_data
         ]
 
     # data to send to openAI
@@ -187,7 +207,7 @@ def chat_message(chat_id):
 
 @app.route("/review_flash_card/<flash_card_id>", methods=["POST"])
 def review_flash_card(flash_card_id):
-    """ Updates a flash card after review"""
+    """Updates a flash card after review"""
     current_user_sub = flask.session.get("openid_sub")
     if not current_user_sub:
         flask.abort(Response("Please log in", 401))
@@ -216,7 +236,10 @@ def review_flash_card(flash_card_id):
 
     return flask.jsonify({"status": "SUCCESS"}), 200
 
-@app.route("/flash_card/<chat_id>/<chat_message_id>/<flash_card_index>", methods=["POST"])
+
+@app.route(
+    "/flash_card/<chat_id>/<chat_message_id>/<flash_card_index>", methods=["POST"]
+)
 def create_or_update_flash_card(chat_id, chat_message_id, flash_card_index):
     """Fetches the chat from the db, and generates a flash_card from the given index"""
     current_user_sub = flask.session.get("openid_sub")
@@ -239,19 +262,30 @@ def create_or_update_flash_card(chat_id, chat_message_id, flash_card_index):
         assert user_id is not None
 
         chat_message = chat_handler.get_chat_message(
-            engine=DB_ENGINE, user_id=user_id, chat_id=chat_id, chat_message_id=chat_message_id
+            engine=DB_ENGINE,
+            user_id=user_id,
+            chat_id=chat_id,
+            chat_message_id=chat_message_id,
         )
         assert chat_message is not None
 
-        chat_message_response = chat_response_types.chat_message_to_chat_message_response(
-            chat_id=chat_id,
-            chat_message_id=chat_message_id,
-            chat_message=chat_message,
+        chat_message_response = (
+            chat_response_types.chat_message_to_chat_message_response(
+                chat_id=chat_id,
+                chat_message_id=chat_message_id,
+                chat_message=chat_message,
+            )
         )
 
-        assert (chat_message_response.flash_card_lesson is not None
-                and 0 <= flash_card_index < len(chat_message_response.flash_card_lesson.flash_cards))
-        flash_card = chat_message_response.flash_card_lesson.flash_cards[flash_card_index]
+        assert (
+            chat_message_response.flash_card_lesson is not None
+            and 0
+            <= flash_card_index
+            < len(chat_message_response.flash_card_lesson.flash_cards)
+        )
+        flash_card = chat_message_response.flash_card_lesson.flash_cards[
+            flash_card_index
+        ]
 
         # write to db
         flash_card_handler.create_or_update_flash_card(
@@ -268,6 +302,7 @@ def create_or_update_flash_card(chat_id, chat_message_id, flash_card_index):
         flask.abort(Response("Invalid request", 404))
 
     return flask.jsonify({"status": "SUCCESS", "save": save}), 200
+
 
 @app.route("/flash_cards/<flash_card_status>", methods=["GET"])
 def get_flash_cards(flash_card_status: str):
@@ -294,9 +329,12 @@ def get_flash_cards(flash_card_status: str):
     except AssertionError:
         flask.abort(Response("Invalid request", 404))
 
-    cards_response = [flash_card_types.flash_card_to_flash_card_response(card) for card in cards]
+    cards_response = [
+        flash_card_types.flash_card_to_flash_card_response(card) for card in cards
+    ]
 
     return flask.jsonify(cards_response), 200
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5555, debug=True)

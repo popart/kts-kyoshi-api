@@ -33,6 +33,18 @@ def get_chats(engine: Engine, user_id: uuid.UUID) -> list[db_models.Chat]:
             for c in session.scalars(stmt)
         ]
 
+def delete_chat(engine: Engine, user_id: uuid.UUID, chat_id: uuid.UUID):
+    stmt = (
+        select(db_models.Chat)
+        .where(db_models.Chat.user_id == user_id)
+        .where(db_models.Chat.chat_id == chat_id)
+    )
+    with Session(engine) as session:
+        res = session.execute(stmt).scalar_one_or_none()
+        if res:
+            session.delete(res)
+            session.commit()
+
 
 def get_chat_messages(
     engine: Engine, user_id: uuid.UUID, chat_id: uuid.UUID
