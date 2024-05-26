@@ -304,6 +304,34 @@ def create_or_update_flash_card(chat_id, chat_message_id, flash_card_index):
     return flask.jsonify({"status": "SUCCESS", "save": save}), 200
 
 
+@app.route("/flash_card/<flash_card_id>", methods=["DELETE"])
+def delete_flash_card(flash_card_id):
+    """Soft-deletes a flash_card by id"""
+    current_user_sub = flask.session.get("openid_sub")
+    if not current_user_sub:
+        flask.abort(Response("Please log in", 401))
+
+    try:
+        flash_card_id = uuid.UUID(flash_card_id)
+    except ValueError:
+        flask.abort(Response("Not a valid flash_card_id", 404))
+
+    try:
+        user_id = user_handler.get_user_id(DB_ENGINE, current_user_sub)
+        assert user_id is not None
+
+        # write to db
+        flash_card_handler.delete_flash_card(
+            engine=DB_ENGINE,
+            user_id=user_id,
+            flash_card_id=flash_card_id,
+        )
+    except AssertionError:
+        flask.abort(Response("Invalid request", 404))
+
+    return flask.jsonify({"status": "SUCCESS"}), 200
+
+
 @app.route("/flash_cards/<flash_card_status>", methods=["GET"])
 def get_flash_cards(flash_card_status: str):
     """Fetches all flash_cards with the new state"""

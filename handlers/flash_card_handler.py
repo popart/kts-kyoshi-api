@@ -68,6 +68,28 @@ def create_or_update_flash_card(
         session.commit()
 
 
+def delete_flash_card(
+    engine: Engine,
+    user_id: uuid.UUID,
+    flash_card_id: uuid.UUID,
+):
+    existing_instance_stmt = (
+        select(db_models.FlashCard)
+        .where(db_models.FlashCard.user_id == user_id)
+        .where(db_models.FlashCard.flash_card_id == flash_card_id)
+        .with_for_update(nowait=True)
+    )
+    with Session(engine) as session:
+        instance = session.execute(existing_instance_stmt).scalar_one_or_none()
+
+        if instance:
+            instance.is_active = False
+            instance.fsrs_state = fsrs.State.New.value
+
+        session.add(instance)
+        session.commit()
+
+
 def review_flash_card(
     engine: Engine,
     user_id: uuid.UUID,
@@ -105,6 +127,7 @@ def get_flash_cards_new(engine: Engine, user_id: uuid.UUID):
         select(db_models.FlashCard)
         .where(db_models.FlashCard.user_id == user_id)
         .where(db_models.FlashCard.fsrs_state == fsrs.State.New.value)
+        .where(db_models.FlashCard.is_active)
         .order_by(desc(db_models.FlashCard.jlpt_level))
         .order_by(db_models.FlashCard.created_at)
         .limit(100)
@@ -119,6 +142,7 @@ def get_flash_cards_review(engine: Engine, user_id: uuid.UUID):
         .where(db_models.FlashCard.user_id == user_id)
         .where(db_models.FlashCard.fsrs_state > fsrs.State.New.value)
         .where(db_models.FlashCard.fsrs_due_at < datetime.now(tz=timezone.utc))
+        .where(db_models.FlashCard.is_active)
         .order_by(db_models.FlashCard.fsrs_due_at)
         .limit(10)
     )
