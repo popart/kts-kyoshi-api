@@ -2,7 +2,7 @@
 
 import uuid
 
-from sqlalchemy import Column, String, DateTime, JSON
+from sqlalchemy import Boolean, Column, String, DateTime, JSON, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
@@ -19,6 +19,7 @@ class Chat(Base):
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+    is_active = Column(Boolean, nullable=False, server_default=text("TRUE"))
 
 
 class ChatMessage(Base):

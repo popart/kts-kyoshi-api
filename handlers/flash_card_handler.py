@@ -86,8 +86,8 @@ def delete_flash_card(
             instance.is_active = False
             instance.fsrs_state = fsrs.State.New.value
 
-        session.add(instance)
-        session.commit()
+            session.add(instance)
+            session.commit()
 
 
 def review_flash_card(

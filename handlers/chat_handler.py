@@ -21,6 +21,7 @@ def get_chats(engine: Engine, user_id: uuid.UUID) -> list[db_models.Chat]:
     stmt = (
         select(db_models.Chat)
         .where(db_models.Chat.user_id == user_id)
+        .where(db_models.Chat.is_active)
         .order_by(desc(db_models.Chat.created_at))
     )
     with Session(engine) as session:
@@ -39,11 +40,15 @@ def delete_chat(engine: Engine, user_id: uuid.UUID, chat_id: uuid.UUID):
         select(db_models.Chat)
         .where(db_models.Chat.user_id == user_id)
         .where(db_models.Chat.chat_id == chat_id)
+        .with_for_update(nowait=True)
     )
     with Session(engine) as session:
-        res = session.execute(stmt).scalar_one_or_none()
-        if res:
-            session.delete(res)
+        instance = session.execute(stmt).scalar_one_or_none()
+
+        if instance:
+            instance.is_active = False
+
+            session.add(instance)
             session.commit()
 
 
