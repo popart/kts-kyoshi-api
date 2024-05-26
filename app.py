@@ -119,7 +119,7 @@ def chat(chat_id):
     if flask.request.method == "GET":
         response = chat_handler.get_chats(engine=DB_ENGINE, user_id=user_id)
 
-    # DELETE delets a single chat
+    # DELETE deletes a single chat
     elif flask.request.method == "DELETE":
         assert chat_id is not None
         try:

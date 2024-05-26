@@ -48,6 +48,9 @@ def create_or_update_flash_card(
         instance = session.execute(existing_instance_stmt).scalar_one_or_none()
         if instance:
             instance.is_active = is_active
+            # whenever card is bookmarked, it should show up in new pile
+            # but don't reset fsrs stats or due date
+            instance.fsrs_state = fsrs.State.New.value
         else:
             instance = db_models.FlashCard(
                 user_id=user_id,
