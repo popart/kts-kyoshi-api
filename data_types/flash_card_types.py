@@ -18,8 +18,11 @@ class JLPTLevel(Enum):
 
 @dataclass
 class FlashCardContent:
-    input_text: str | None
-    translated_text: str | None
+    # From the FlashCardLesson
+    example_sentence: str | None
+    example_sentence_translation: str | None
+
+    # From the FlashCard
     japanese_example: str | None
     dictionary_form: str | None
     teaching_notes: str | None
