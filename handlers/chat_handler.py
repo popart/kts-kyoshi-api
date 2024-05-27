@@ -29,10 +29,28 @@ def get_chats(engine: Engine, user_id: uuid.UUID) -> list[db_models.Chat]:
             chat_types.Chat(
                 user_id=c.user_id,
                 chat_id=c.chat_id,
+                chat_name=c.chat_name,
                 created_at=c.created_at,
             )
             for c in session.scalars(stmt)
         ]
+
+
+def update_chat(engine: Engine, user_id: uuid.UUID, chat_id: uuid.UUID, chat_name: str):
+    stmt = (
+        select(db_models.Chat)
+        .where(db_models.Chat.user_id == user_id)
+        .where(db_models.Chat.chat_id == chat_id)
+        .with_for_update(nowait=True)
+    )
+    with Session(engine) as session:
+        instance = session.execute(stmt).scalar_one_or_none()
+
+        if instance:
+            instance.chat_name = chat_name
+
+            session.add(instance)
+            session.commit()
 
 
 def delete_chat(engine: Engine, user_id: uuid.UUID, chat_id: uuid.UUID):

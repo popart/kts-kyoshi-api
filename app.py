@@ -131,7 +131,20 @@ def chat(chat_id):
 
     # POST creates a new chat
     else:
-        chat_handler.create_chat(engine=DB_ENGINE, user_id=user_id)
+        if chat_id is not None:
+            try:
+                chat_id = uuid.UUID(chat_id)
+            except ValueError:
+                flask.abort(Response("Not a valid chat id", 404))
+
+            data = flask.request.json
+            chat_name = data.get("chat_name") if data else None
+
+            chat_handler.update_chat(
+                engine=DB_ENGINE, user_id=user_id, chat_id=chat_id, chat_name=chat_name
+            )
+        else:
+            chat_handler.create_chat(engine=DB_ENGINE, user_id=user_id)
         response = {"status": "SUCCESS"}
 
     return flask.jsonify(response), 200

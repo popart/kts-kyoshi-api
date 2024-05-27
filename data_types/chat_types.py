@@ -29,6 +29,7 @@ class ChatMessage:
 class Chat:
     user_id: uuid.UUID
     chat_id: uuid.UUID
+    chat_name: str
     created_at: datetime.datetime
 
 

@@ -15,6 +15,7 @@ class Chat(Base):
     __tablename__ = "chat"
     chat_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    chat_name = Column(String, nullable=False, server_default=text("''"))
     llm_provider = Column(String, nullable=False)
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
