@@ -37,6 +37,10 @@ tools = [
                         "type": "string",
                         "description": "A sentence in japanese that is used to generate the lesson of flash cards. If the student_input was already a Japanese sentence, then the `example_sentence` duplicates the `student_input`. Otherwise, the tutor makes up an example sentence to help teach the student something they asked about.",
                     },
+                    "example_sentence_translation": {
+                        "type": "string",
+                        "description": "The `example_sentence` translated into English",
+                    },
                     "japanese_flash_cards": {
                         "type": "array",
                         "description": "A comprehensive list of flash card objects. The tutor_response is completely broken down into bite-size teaching points. Each card focuses on a japanese_text, and teaches the student how to understand it.",
@@ -45,7 +49,7 @@ tools = [
                             "properties": {
                                 "japanese_example": {
                                     "type": "string",
-                                    "description": "The vocab or grammar point as written and conjugated in the example_sentence, without changes. Each kanji or 熟語 is followed by its pronunciation in parenthesis.",
+                                    "description": "The vocab or grammar point as written and conjugated in the `example_sentence`, without changes. Each kanji or 熟語 is followed by its pronunciation in parenthesis.",
                                 },
                                 "dictionary_form": {
                                     "type": "string",
@@ -68,6 +72,7 @@ tools = [
                     "student_input",
                     "tutor_response",
                     "example_sentence",
+                    "example_sentence_translation",
                     "japanese_flash_cards",
                 ],
             },
@@ -112,9 +117,10 @@ examples.append(
                     name="create_japanese_lesson",
                     arguments=json.dumps(
                         {
-                            "student_input": "お前(まえ)が近所(きんじょ)からどう言(い)われてるか、知(し)らない訳(わけ)じゃないだろ！",
+                            "student_input": "お前(まえ)が近所(きんじょ)からどう言(い)われてるか、知(し)らない訳(わけ)じゃなだろ！",
                             "tutor_response": tutor_response_1,
                             "example_sentence": "お前(まえ)が近所(きんじょ)からどう言(い)われてるか、知(し)らない訳(わけ)じゃないだろ！",
+                            "example_sentence_translation": "You know what the neighborhood says about you, right?",
                             "japanese_flash_cards": [
                                 {
                                     "japanese_example": "お前(まえ)",
@@ -190,6 +196,7 @@ examples.append(
                             "the sentence. For example, in the sentence 'I don't know "
                             "where he is,' the embedded question is 'where he is.'",
                             "example_sentence": "彼(かれ)がどこにいるか知(し)らない。",
+                            "example_sentence_translation": "I don't know where he is.",
                             "japanese_flash_cards": [
                                 {
                                     "japanese_example": "彼(かれ)",
