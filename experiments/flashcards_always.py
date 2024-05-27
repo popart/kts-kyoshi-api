@@ -1,8 +1,14 @@
+"""Try to pull out grammar, explanations, and pronuncations"""
+
+from openai import OpenAI
+
+import pprint
+import uuid
 import json
 
-from data_types import chat_types
-from clients.chat.abstract_chat_client import AbstractChatClient
-from prompts.prompt import Prompt
+
+client = OpenAI()
+MODEL = "gpt-4o"  # gpt-4 turbo
 
 role = """You are Kyoshi, a Japanese tutor for English speaking students. The student will ask you a question about Japanese or give you a sentence in Japanese that they are trying to translate.
 
@@ -14,8 +20,9 @@ Then generate your response to the student. Your response could be a translation
 
 Finally generate a sequence of flash cards that would be helpful for the student to review later to go over your translation or explanation. Each flash card is a bite-sized unit to learn, such as a vocabulary word or grammar point. If the student gave you a Japanese sentence to translate, the cards should match the order of words in the sentence.
 
-<important>Any kanji or 熟語 that you output must be followed by their hiragana pronunciation in parenthesis. Do not output romaji.</important>
+<important>Any kanji or 熟語 that you output must be followed by their hiragana pronunciation in parenthesis.</important>
 """
+
 tools = [
     {
         "type": "function",
@@ -37,10 +44,6 @@ tools = [
                         "type": "string",
                         "description": "A sentence in japanese that is used to generate the lesson of flash cards. If the student_input was already a Japanese sentence, then the `example_sentence` duplicates the `student_input`. Otherwise, the tutor makes up an example sentence to help teach the student something they asked about.",
                     },
-                    "example_sentence_translation": {
-                        "type": "string",
-                        "description": "The `example_sentence` translated into English",
-                    },
                     "japanese_flash_cards": {
                         "type": "array",
                         "description": "A comprehensive list of flash card objects. The tutor_response is completely broken down into bite-size teaching points. Each card focuses on a japanese_text, and teaches the student how to understand it.",
@@ -49,7 +52,7 @@ tools = [
                             "properties": {
                                 "japanese_example": {
                                     "type": "string",
-                                    "description": "The vocab or grammar point as written and conjugated in the `example_sentence`, without changes. Each kanji or 熟語 is followed by its pronunciation in parenthesis.",
+                                    "description": "The vocab or grammar point as written and conjugated in the example_sentence, without changes. Each kanji or 熟語 is followed by its pronunciation in parenthesis.",
                                 },
                                 "dictionary_form": {
                                     "type": "string",
@@ -72,7 +75,6 @@ tools = [
                     "student_input",
                     "tutor_response",
                     "example_sentence",
-                    "example_sentence_translation",
                     "japanese_flash_cards",
                 ],
             },
@@ -80,14 +82,21 @@ tools = [
     }
 ]
 
-examples = []
-
-# Example 1
-examples.append(
-    chat_types.ChatMessage(
-        role="user", content="お前が近所からどう言われてるか、知らない訳じゃなだろ！"
-    )
+messages = []
+messages.append(
+    {
+        "role": "system",
+        "content": role,
+    }
 )
+# example 1
+messages.append(
+    {
+        "role": "user",
+        "content": "お前が近所からどう言われてるか、知らない訳じゃなだろ！",
+    }
+)
+
 tutor_response_1 = """
 ### Translation
 
@@ -106,21 +115,20 @@ tutor_response_1 = """
   - **訳(わけ)じゃない**: "it's not that" (double negative implying the speaker actually knows)
   - **だろ**: Informal form of でしょう, used to seek confirmation, similar to "right?" or "isn't it?"
 """
-examples.append(
-    chat_types.ChatMessage(
+messages.append(
+    dict(
         role="assistant",
         tool_calls=[
-            chat_types.ToolCall(
+            dict(
                 id="call_001",
                 type="function",
-                function=chat_types.Function(
+                function=dict(
                     name="create_japanese_lesson",
                     arguments=json.dumps(
                         {
-                            "student_input": "お前(まえ)が近所(きんじょ)からどう言(い)われてるか、知(し)らない訳(わけ)じゃなだろ！",
+                            "student_input": "お前(まえ)が近所(きんじょ)からどう言(い)われてるか、知(し)らない訳(わけ)じゃないだろ！",
                             "tutor_response": tutor_response_1,
                             "example_sentence": "お前(まえ)が近所(きんじょ)からどう言(い)われてるか、知(し)らない訳(わけ)じゃないだろ！",
-                            "example_sentence_translation": "You know what the neighborhood says about you, right?",
                             "japanese_flash_cards": [
                                 {
                                     "japanese_example": "お前(まえ)",
@@ -173,19 +181,28 @@ examples.append(
         ],
     )
 )
-
-# Example 2
-examples.append(
-    chat_types.ChatMessage(role="user", content="What's an embedded question?")
+# required tool call response
+messages.append(
+    {
+        "role": "tool",
+        "tool_call_id": "call_001",
+        "content": "SUCCESS",
+    }
 )
-examples.append(
-    chat_types.ChatMessage(
+messages.append(
+    {
+        "role": "user",
+        "content": "What's an embedded question?",
+    }
+)
+messages.append(
+    dict(
         role="assistant",
         tool_calls=[
-            chat_types.ToolCall(
+            dict(
                 id="call_002",
                 type="function",
-                function=chat_types.Function(
+                function=dict(
                     name="create_japanese_lesson",
                     arguments=json.dumps(
                         {
@@ -196,49 +213,48 @@ examples.append(
                             "the sentence. For example, in the sentence 'I don't know "
                             "where he is,' the embedded question is 'where he is.'",
                             "example_sentence": "彼(かれ)がどこにいるか知(し)らない。",
-                            "example_sentence_translation": "I don't know where he is.",
                             "japanese_flash_cards": [
                                 {
-                                    "japanese_example": "彼(かれ)",
                                     "dictionary_form": "彼(かれ)",
+                                    "japanese_example": "彼(かれ)",
+                                    "jlpt_level": "N5",
                                     "teaching_notes": "Pronoun: Means 'he' or 'him.'",
-                                    "jlpt_level": "N5",
                                 },
                                 {
-                                    "japanese_example": "どこ",
                                     "dictionary_form": "どこ",
-                                    "teaching_notes": "Interrogative: Means 'where.'",
+                                    "japanese_example": "どこ",
                                     "jlpt_level": "N5",
+                                    "teaching_notes": "Interrogative: Means 'where.'",
                                 },
                                 {
-                                    "japanese_example": "に",
                                     "dictionary_form": "に",
+                                    "japanese_example": "に",
+                                    "jlpt_level": "N5",
                                     "teaching_notes": "Particle: Indicates direction or "
                                     "location.",
-                                    "jlpt_level": "N5",
                                 },
                                 {
-                                    "japanese_example": "いる",
                                     "dictionary_form": "いる",
+                                    "japanese_example": "いる",
+                                    "jlpt_level": "N5",
                                     "teaching_notes": "Verb: Means 'to be' or 'to "
                                     "exist' (for animate objects).",
-                                    "jlpt_level": "N5",
                                 },
                                 {
-                                    "japanese_example": "か",
                                     "dictionary_form": "か",
+                                    "japanese_example": "か",
+                                    "jlpt_level": "N5",
                                     "teaching_notes": "Particle: Used to indicate a "
                                     "question within a sentence, "
                                     "marking the embedded question.",
-                                    "jlpt_level": "N5",
                                 },
                                 {
-                                    "japanese_example": "知(し)らない",
                                     "dictionary_form": "知(し)る",
+                                    "japanese_example": "知(し)らない",
+                                    "jlpt_level": "N5",
                                     "teaching_notes": "Verb: Means 'to know.' In its "
                                     "negative form, it means 'to not "
                                     "know.'",
-                                    "jlpt_level": "N5",
                                 },
                             ],
                         }
@@ -248,7 +264,32 @@ examples.append(
         ],
     )
 )
+messages.append(
+    {
+        "role": "tool",
+        "tool_call_id": "call_002",
+        "content": "SUCCESS",
+    }
+)
+messages.append(
+    {
+        "role": "user",
+        "content": "What's an embedded question?",
+    }
+)
 
+response = client.chat.completions.create(
+    model=MODEL,
+    messages=messages,
+    frequency_penalty=0.0,
+    presence_penalty=0.0,
+    temperature=0.0,
+    user=str(uuid.uuid4()),
+    tools=tools,
+    tool_choice={"type": "function", "function": {"name": "create_japanese_lesson"}},
+)
+pprint.pprint(response)
 
-def get_prompt_flash_cards(chat_client: AbstractChatClient):
-    return Prompt(chat_client=chat_client, role=role, tools=tools, examples=examples)
+if response.choices[0].message.tool_calls:
+    output = response.choices[0].message.tool_calls[0].function.arguments
+    pprint.pprint(json.loads(output))

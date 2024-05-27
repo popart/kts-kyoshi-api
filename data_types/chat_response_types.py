@@ -25,8 +25,10 @@ class FlashCard:
 
 @dataclass
 class FlashCardLesson:
-    input_text: str | None
-    translated_text: str | None
+    student_input: str | None
+    tutor_response: str | None
+    example_sentence: str | None
+    example_sentence_translation: str | None
     flash_cards: list[FlashCard]
 
 
@@ -71,8 +73,10 @@ def chat_message_to_chat_message_response(
                 flash_cards[i].is_saved = True
 
         flash_card_lesson = FlashCardLesson(
-            input_text=fn_args.get("input_text", ""),
-            translated_text=fn_args.get("translated_text", ""),
+            student_input=fn_args.get("student_input"),
+            tutor_response=fn_args.get("tutor_response"),
+            example_sentence=fn_args.get("example_sentence"),
+            example_sentence_translation=fn_args.get("example_sentence_translation"),
             flash_cards=flash_cards,
         )
 

@@ -21,8 +21,8 @@ def create_or_update_flash_card(
 ):
     content = asdict(
         flash_card_types.FlashCardContent(
-            input_text=flash_card_lesson.input_text,
-            translated_text=flash_card_lesson.translated_text,
+            example_sentence=flash_card_lesson.example_sentence,
+            example_sentence_translation=flash_card_lesson.example_sentence_translation,
             japanese_example=flash_card.japanese_example,
             dictionary_form=flash_card.dictionary_form,
             teaching_notes=flash_card.teaching_notes,
