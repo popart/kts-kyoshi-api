@@ -4,34 +4,52 @@ from data_types import chat_types
 from clients.chat.abstract_chat_client import AbstractChatClient
 from prompts.prompt import Prompt
 
+role = """You are Kyoshi, a Japanese tutor for English speaking students. The student will ask you a question about Japanese or give you a sentence in Japanese that they are trying to translate.
 
-role = """You are Kyoshi, a Japanese tutor for English speaking students. You have two jobs:
-1a) When User gives you a sentence in Japanese, convert it into a JSON list of flash cards. Each flash card will contain the `japanese_example`, i.e. the word as conjugated in the sentence, the `dictionary_form`, i.e. the word as you would find it in a japanese dictionary, and `teaching_notes`, i.e. explanations of vocab, grammar points, and other pedantically useful knowledge. Call the create_japanese_flash_cards() function and pass in the JSON list of flash_cards as an argument. Make sure you close all parenthesis and brackets in your arguments.
-1b) After creating the flash cards, add a translation for the overall meaning of the sentence.
-2) If User asks you a language question, answer their question if it relates to Japanese. In general you should treat all Japanese messages as translation requests. If a question is irrelevant to language study just reply with an ellipsis (...)."""
+You will generate a short lesson from the student's input and save it by calling the create_japanese_lesson() function.
 
+First fix any spelling or grammar errors in the student's input (that can't be attributed to vernacular speech) and pass that as the `student_input` argument.
+
+Then generate your response to the student. Your response could be a translation from Japanese to English, or it could be an explanation for a specific question from the student. Pass this response as the `tutor_response` argument. If the student input is not related to learning Japanese, then just pass an empty string.
+
+Finally generate a sequence of flash cards that would be helpful for the student to review later to go over your translation or explanation. Each flash card is a bite-sized unit to learn, such as a vocabulary word or grammar point. If the student gave you a Japanese sentence to translate, the cards should match the order of words in the sentence.
+
+<important>Any kanji or 熟語 that you output must be followed by their hiragana pronunciation in parenthesis. Do not output romaji.</important>
+"""
 tools = [
     {
         "type": "function",
         "function": {
-            "name": "create_japanese_flash_cards",
-            "description": "Saves a list of japanese_flash_cards. Each item in the list explains a vocab or grammar teaching point from the input sentence. Cards cover all but the most basic grammar and vocabulary.",
+            "name": "create_japanese_lesson",
+            "description": "Saves a lesson point and a list of japanese_flash_cards. Each item in the list explains a vocab or grammar teaching point from the student_point and tutor_response.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "input_text": {
+                    "student_input": {
                         "type": "string",
-                        "description": "The original input. Typos that cannot be attributed to vernacular speech are corrected.",
+                        "description": "The student's original query or request. Typos that cannot be attributed to vernacular speech are corrected.",
+                    },
+                    "tutor_response": {
+                        "type": "string",
+                        "description": "The tutor's response to the student. A translation or an answer to a pedagogical question. If the student_input was unrelated to language learning, then returns an empty string.",
+                    },
+                    "example_sentence": {
+                        "type": "string",
+                        "description": "A sentence in japanese that is used to generate the lesson of flash cards. If the student_input was already a Japanese sentence, then the `example_sentence` duplicates the `student_input`. Otherwise, the tutor makes up an example sentence to help teach the student something they asked about.",
+                    },
+                    "example_sentence_translation": {
+                        "type": "string",
+                        "description": "The `example_sentence` translated into English",
                     },
                     "japanese_flash_cards": {
                         "type": "array",
-                        "description": "A comprehensive list of flash card objects, explaining each grammar and vocab point in the input_text.",
+                        "description": "A comprehensive list of flash card objects. The tutor_response is completely broken down into bite-size teaching points. Each card focuses on a japanese_text, and teaches the student how to understand it.",
                         "items": {
                             "type": "object",
                             "properties": {
                                 "japanese_example": {
                                     "type": "string",
-                                    "description": "The vocab or grammar point as written and conjugated in the input_text, without changes. Each kanji or 熟語 is followed by its pronunciation in parenthesis.",
+                                    "description": "The vocab or grammar point as written and conjugated in the `example_sentence`, without changes. Each kanji or 熟語 is followed by its pronunciation in parenthesis.",
                                 },
                                 "dictionary_form": {
                                     "type": "string",
@@ -39,79 +57,55 @@ tools = [
                                 },
                                 "teaching_notes": {
                                     "type": "string",
-                                    "description": "Explanation of grammar, including conjugation & colloqualisms. For shortened spoken forms, expands the form to its full originating phrase.",
+                                    "description": "Explanation of grammar, including conjugation & colloqualisms. For shortened spoken forms, expands the form to its full originating phrase",
                                 },
                                 "jlpt_level": {
                                     "type": "string",
-                                    "description": "JLPT level",
+                                    "description": "Approximate JLPT level for this teaching point.",
                                     "enum": ["N5", "N4", "N3", "N2", "N1"],
                                 },
                             },
                         },
                     },
-                    "translated_text": {
-                        "type": "string",
-                        "description": "the simplest translation that still captures the nuance of the sentence",
-                    },
                 },
-                "required": ["japanese_vocab_words", "translated_text"],
+                "required": [
+                    "student_input",
+                    "tutor_response",
+                    "example_sentence",
+                    "example_sentence_translation",
+                    "japanese_flash_cards",
+                ],
             },
         },
-    },
+    }
 ]
+
 examples = []
 
-# Example 1:
-examples.append(
-    chat_types.ChatMessage(role="user", content="しょうがない、それでいこう")
-)
-examples.append(
-    chat_types.ChatMessage(
-        role="assistant",
-        tool_calls=[
-            chat_types.ToolCall(
-                id="call_001",
-                type="function",
-                function=chat_types.Function(
-                    name="save_japanese_vocab_words",
-                    arguments=json.dumps(
-                        {
-                            "input_text": "しょうがない、それでいこう",
-                            "japanese_flash_cards": [
-                                {
-                                    "japanese_example": "しょうがない",
-                                    "dictionary_form": "仕(し)方(かた)がない",
-                                    "teaching_notes": "Expression: 'It can't be helped' or 'nothing can be done about it.' Often used to express resignation or acceptance of a situation. A contraction where '仕方' means 'method' or 'way,' and 'がない' means 'there is none.'",
-                                    "jlpt_level": "N4",
-                                },
-                                {
-                                    "japanese_example": "それで",
-                                    "dictionary_form": "それで",
-                                    "teaching_notes": "Conjunction: 'and with that,' 'therefore,' or 'because of that.' Used to connect sentences or clauses, indicating a cause or reason leading to a result.",
-                                    "jlpt_level": "N5",
-                                },
-                                {
-                                    "japanese_example": "いこう",
-                                    "dictionary_form": "行(い)く",
-                                    "teaching_notes": "Verb: volitional form of the verb '行く' (to go), used to express a decision or suggestion about the future, equivalent to saying 'let's go' in English.",
-                                    "jlpt_level": "N5",
-                                },
-                            ],
-                            "translated_text": "It can't be helped, let's go with that.",
-                        },
-                    ),
-                ),
-            )
-        ],
-    )
-)
-
-# Example 2:
+# Example 1
 examples.append(
     chat_types.ChatMessage(
         role="user", content="お前が近所からどう言われてるか、知らない訳じゃなだろ！"
     )
 )
+tutor_response_1 = """
+### Translation
+
+"You know what the neighborhood says about you, right?"
+
+### Detailed Breakdown
+
+- **お前(まえ)が**: "You" (subject marker)
+- **近所(きんじょ)から**: "from the neighborhood"
+- **どう言(い)われてるか**: "how you are being talked about" (embedded question)
+  - **どう**: "how"
+  - **言(い)われてる**: Passive form of 言う (to say), meaning "being talked about"
+  - **か**: Question marker for the embedded question
+- **知(し)らない訳(わけ)じゃないだろ**: "it's not that I don't know, right?"
+  - **知(し)らない**: "don't know"
+  - **訳(わけ)じゃない**: "it's not that" (double negative implying the speaker actually knows)
+  - **だろ**: Informal form of でしょう, used to seek confirmation, similar to "right?" or "isn't it?"
+"""
 examples.append(
     chat_types.ChatMessage(
         role="assistant",
@@ -120,43 +114,39 @@ examples.append(
                 id="call_001",
                 type="function",
                 function=chat_types.Function(
-                    name="save_japanese_vocab_words",
+                    name="create_japanese_lesson",
                     arguments=json.dumps(
                         {
-                            "input_text": "お前が近所からどう言われてるか、知らない訳じゃないだろ！",
+                            "student_input": "お前(まえ)が近所(きんじょ)からどう言(い)われてるか、知(し)らない訳(わけ)じゃなだろ！",
+                            "tutor_response": tutor_response_1,
+                            "example_sentence": "お前(まえ)が近所(きんじょ)からどう言(い)われてるか、知(し)らない訳(わけ)じゃないだろ！",
+                            "example_sentence_translation": "You know what the neighborhood says about you, right?",
                             "japanese_flash_cards": [
                                 {
+                                    "japanese_example": "お前(まえ)",
                                     "dictionary_form": "お前(まえ)",
-                                    "japanese_example": "お前(おまえ)",
                                     "jlpt_level": "N5",
-                                    "teaching_notes": "Pronoun: 'you.' Informal and can "
-                                    "be considered rude or "
-                                    "confrontational when used "
-                                    "outside of close relationships "
-                                    "or familiar contexts.",
+                                    "teaching_notes": "Pronoun: A casual or rude way to say "
+                                    "'you'. Often used among friends "
+                                    "or in confrontational "
+                                    "situations.",
                                 },
                                 {
-                                    "dictionary_form": "近(きん)所(じょ)",
-                                    "japanese_example": "近(きん)所(じょ)",
+                                    "japanese_example": "近所(きんじょ)",
+                                    "dictionary_form": "近所(きんじょ)",
                                     "jlpt_level": "N5",
-                                    "teaching_notes": "Noun: 'neighborhood' or "
-                                    "'vicinity.' Refers to the "
-                                    "immediate area around one's "
-                                    "living place.",
+                                    "teaching_notes": "Noun: Means 'neighborhood' or 'vicinity'.",
                                 },
                                 {
-                                    "dictionary_form": "どう言(い)う",
-                                    "japanese_example": "どう言(い)われてる",
-                                    "jlpt_level": "N3",
-                                    "teaching_notes": "Expression: 'how is it said.' "
-                                    "This is a passive construction "
-                                    "of '言う' (to say), indicating "
-                                    "what is being said about someone "
-                                    "or something in general terms.",
+                                    "japanese_example": "言(い)われてる(い)",
+                                    "dictionary_form": "言(い)われる",
+                                    "jlpt_level": "N4",
+                                    "teaching_notes": "Verb: Passive form of 言う (to say). "
+                                    "Means 'to be said'.",
                                 },
                                 {
-                                    "dictionary_form": "知(し)る",
                                     "japanese_example": "知(し)らない訳(わけ)じゃない",
+                                    "dictionary_form": "知(し)る",
                                     "jlpt_level": "N3",
                                     "teaching_notes": "Expression: 'it's not that I "
                                     "don't know.' A double negative "
@@ -166,8 +156,8 @@ examples.append(
                                     "'reason' or 'circumstance.'",
                                 },
                                 {
-                                    "dictionary_form": "だろう",
                                     "japanese_example": "だろ",
+                                    "dictionary_form": "だろう",
                                     "jlpt_level": "N4",
                                     "teaching_notes": "Auxiliary: A less formal version "
                                     "of 'でしょう,' used to express "
@@ -176,8 +166,7 @@ examples.append(
                                     "it?' in English.",
                                 },
                             ],
-                            "translated_text": "You know what the neighborhood says about you, right?",
-                        },
+                        }
                     ),
                 ),
             )
@@ -185,62 +174,74 @@ examples.append(
     )
 )
 
-# Example 3
+# Example 2
 examples.append(
-    chat_types.ChatMessage(role="user", content="世界電気通信および情報社会の日")
+    chat_types.ChatMessage(role="user", content="What's an embedded question?")
 )
 examples.append(
     chat_types.ChatMessage(
         role="assistant",
         tool_calls=[
             chat_types.ToolCall(
-                id="call_001",
+                id="call_002",
                 type="function",
                 function=chat_types.Function(
-                    name="save_japanese_vocab_words",
+                    name="create_japanese_lesson",
                     arguments=json.dumps(
                         {
-                            "input_text": "世界電気通信および情報社会の日",
+                            "student_input": "What's an embedded question?",
+                            "tutor_response": "An embedded question is a question that is included within "
+                            "another sentence. In Japanese, embedded questions often "
+                            "use the particle か to indicate the question within "
+                            "the sentence. For example, in the sentence 'I don't know "
+                            "where he is,' the embedded question is 'where he is.'",
+                            "example_sentence": "彼(かれ)がどこにいるか知(し)らない。",
+                            "example_sentence_translation": "I don't know where he is.",
                             "japanese_flash_cards": [
                                 {
-                                    "japanese_example": "世界(せかい)",
-                                    "dictionary_form": "世界(せかい)",
-                                    "teaching_notes": "Noun: 'world.' Refers to the entire globe or the realm of human existence.",
+                                    "japanese_example": "彼(かれ)",
+                                    "dictionary_form": "彼(かれ)",
+                                    "teaching_notes": "Pronoun: Means 'he' or 'him.'",
                                     "jlpt_level": "N5",
                                 },
                                 {
-                                    "japanese_example": "電気通信(でんきつうしん)",
-                                    "dictionary_form": "電(でん)気(き)通(つう)信(しん)",
-                                    "teaching_notes": "Noun: 'telecommunications.' Refers to the transmission of information over significant distances by electronic means. Composed of 電気, electricity, and 通信, meaning correspondence or communication.",
-                                    "jlpt_level": "N2",
-                                },
-                                {
-                                    "japanese_example": "および",
-                                    "dictionary_form": "および",
-                                    "teaching_notes": "Conjunction: 'and' or 'as well as.' Used to connect words or phrases of equal importance.",
-                                    "jlpt_level": "N2",
-                                },
-                                {
-                                    "japanese_example": "情報社会(じょうほうしゃかい)",
-                                    "dictionary_form": "情(じょう)報(ほう)社(しゃ)会(かい)",
-                                    "teaching_notes": "Noun: 'information society.' Refers to a society where the creation, distribution, and manipulation of information is a significant economic, political, and cultural activity. Composed of 情報, information, and 社会, society.",
-                                    "jlpt_level": "N2",
-                                },
-                                {
-                                    "japanese_example": "の",
-                                    "dictionary_form": "の",
-                                    "teaching_notes": "Particle: Possessive particle used to indicate possession or association, similar to 'of' in English.",
+                                    "japanese_example": "どこ",
+                                    "dictionary_form": "どこ",
+                                    "teaching_notes": "Interrogative: Means 'where.'",
                                     "jlpt_level": "N5",
                                 },
                                 {
-                                    "japanese_example": "日(ひ)",
-                                    "dictionary_form": "日(ひ)",
-                                    "teaching_notes": "Noun: 'day.' Refers to a specific day or date.",
+                                    "japanese_example": "に",
+                                    "dictionary_form": "に",
+                                    "teaching_notes": "Particle: Indicates direction or "
+                                    "location.",
+                                    "jlpt_level": "N5",
+                                },
+                                {
+                                    "japanese_example": "いる",
+                                    "dictionary_form": "いる",
+                                    "teaching_notes": "Verb: Means 'to be' or 'to "
+                                    "exist' (for animate objects).",
+                                    "jlpt_level": "N5",
+                                },
+                                {
+                                    "japanese_example": "か",
+                                    "dictionary_form": "か",
+                                    "teaching_notes": "Particle: Used to indicate a "
+                                    "question within a sentence, "
+                                    "marking the embedded question.",
+                                    "jlpt_level": "N5",
+                                },
+                                {
+                                    "japanese_example": "知(し)らない",
+                                    "dictionary_form": "知(し)る",
+                                    "teaching_notes": "Verb: Means 'to know.' In its "
+                                    "negative form, it means 'to not "
+                                    "know.'",
                                     "jlpt_level": "N5",
                                 },
                             ],
-                            "translated_text": "World Telecommunication and Information Society Day",
-                        },
+                        }
                     ),
                 ),
             )

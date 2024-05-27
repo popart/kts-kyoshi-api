@@ -10,7 +10,7 @@ import flask_cors
 from sqlalchemy import create_engine
 from werkzeug.wrappers.response import Response
 
-from prompts.prompt_flash_cards_2 import get_prompt_flash_cards
+from prompts.prompt_flash_cards import get_prompt_flash_cards
 from clients.chat.openai_chat_client import OpenAIChatClient
 from clients.chat.fake_chat_client import FakeChatClient
 from data_types import chat_types, chat_response_types, flash_card_types
