@@ -7,6 +7,7 @@ from dataclasses import asdict
 
 import flask
 import flask_cors
+import fsrs
 from sqlalchemy import create_engine
 from werkzeug.wrappers.response import Response
 
@@ -375,6 +376,31 @@ def get_flash_cards(flash_card_status: str):
     ]
 
     return flask.jsonify(cards_response), 200
+
+
+@app.route("/flash_card_counts", methods=["GET"])
+def get_flash_card_counts():
+    """Fetches all flash_cards with the new state"""
+    current_user_sub = flask.session.get("openid_sub")
+    if not current_user_sub:
+        flask.abort(Response("Please log in", 401))
+
+    try:
+        user_id = user_handler.get_user_id(DB_ENGINE, current_user_sub)
+        assert user_id is not None
+
+        card_counts = flash_card_handler.get_flash_card_counts(DB_ENGINE, user_id)
+        print(card_counts)
+
+        res = {"NEW": 0, "REVIEW": 0}
+        for status, card_count in card_counts:
+            if status == fsrs.State.New.value:
+                res["NEW"] += card_count
+            else:
+                res["REVIEW"] += card_count
+        return flask.jsonify(res), 200
+    except AssertionError:
+        flask.abort(Response("Invalid request", 404))
 
 
 if __name__ == "__main__":

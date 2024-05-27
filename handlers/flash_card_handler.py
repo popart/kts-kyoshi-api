@@ -3,7 +3,7 @@ from dataclasses import asdict
 import uuid
 
 import fsrs
-from sqlalchemy import desc, select, Engine
+from sqlalchemy import desc, func, select, Engine
 from sqlalchemy.orm import Session
 import db_models
 from data_types import chat_response_types, flash_card_types
@@ -160,3 +160,15 @@ def get_flash_cards_all(engine: Engine, user_id: uuid.UUID):
     )
     with Session(engine) as session:
         return [row[0] for row in session.execute(stmt).fetchall()]
+
+
+def get_flash_card_counts(engine: Engine, user_id: uuid.UUID):
+    stmt = (
+        select(db_models.FlashCard.fsrs_state, func.count())
+        .where(db_models.FlashCard.user_id == user_id)
+        .where(db_models.FlashCard.is_active)
+        .where(db_models.FlashCard.fsrs_due_at < datetime.now(tz=timezone.utc))
+        .group_by(db_models.FlashCard.fsrs_state)
+    )
+    with Session(engine) as session:
+        return session.execute(stmt).all()
