@@ -392,11 +392,13 @@ def get_flash_card_counts():
         card_counts = flash_card_handler.get_flash_card_counts(DB_ENGINE, user_id)
         print(card_counts)
 
-        res = {"NEW": 0, "REVIEW": 0}
-        for status, card_count in card_counts:
+        res = {"NEW": 0, "DUE": 0, "REVIEW": 0}
+        for status, is_due, card_count in card_counts:
             if status == fsrs.State.New.value:
                 res["NEW"] += card_count
             else:
+                if is_due:
+                    res["DUE"] += card_count
                 res["REVIEW"] += card_count
         return flask.jsonify(res), 200
     except AssertionError:
