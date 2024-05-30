@@ -31,6 +31,9 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 SESSION_SECRET_KEY = os.environ["SESSION_SECRET_KEY"]
 GOOGLE_OAUTH_CLIENT_ID = os.environ["GOOGLE_OAUTH_CLIENT_ID"]
 ENV = os.getenv("ENV", "local")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "mypassword")
 
 # setup flask app
 app = flask.Flask(__name__)
@@ -40,14 +43,14 @@ app.secret_key = SESSION_SECRET_KEY
 flask_cors.CORS(app, supports_credentials=True)
 
 # init app (ghetto DI)
-if ENV == "PROD":
+if ENV == "prod":
     CHAT_CLIENT = OpenAIChatClient()
 else:
     CHAT_CLIENT = FakeChatClient(response_type=os.getenv("CHAT_TYPE", "CHAT"))
 PROMPT_FLASHCARDS = get_prompt_flash_cards(CHAT_CLIENT)
 CHATS: dict[str, list[chat_types.ChatMessage]] = {}
 DB_ENGINE = create_engine(
-    "postgresql+psycopg://postgres:mypassword@localhost:5432/kyoshi"
+    f"postgresql+psycopg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:5432/kyoshi"
 )
 
 
