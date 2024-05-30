@@ -42,8 +42,31 @@ DB design:
 Drop all alembic tables:
 `poetry run python -m scripts.drop_all_tables`
 
+# docker build
+```
+docker build -t kyoshi:dev .
+
+docker run -d --name kyoshi_api -p 5555:5555 -e MY_SECRET_KEY=$(gcloud secrets versions access latest --secret="YOUR_SECRET_NAME") kyoshi:dev
+```
+secrets configured in cloud run. pulled at instance startup
+then they'll only live in running instances env.
+and not be saved in the docker build.
+
+# docker network
+Getting all the docker containers to talk to each other
+(`docker-compose up` does all of this)
+```
+docker network create kyoshi_network
+docker network connect kyoshi_network kyoshi_db
+docker network connect kysohi_network kyoshi_api # <-- container_id alias
+
+docker run {kyosh api} --network -e DB_HOST=my_postgres -e DB_USER=postgres -e DB_PASSWORD=mysecretpassword kyoshi_network
+```
+
+
 ## llm providers
 ### 2024-05-11
 gpt-4 definitely works
 claude sonnet (3x cheaper) can't get pronunciations right
 claude opus (3x expensive)
+

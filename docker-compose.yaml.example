@@ -1,0 +1,27 @@
+version: '3'
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5432:5432"
+
+  api:
+    image: kyoshi:dev
+    environment:
+      ENV: prod
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: mypassword
+      SESSION_SECRET_KEY:
+      GOOGLE_OAUTH_CLIENT_ID:
+      OPENAI_API_KEY:
+    depends_on:
+      - db
+    ports:
+      - "5555:5555"
+
+networks:
+  default:
+    name: kyoshi_network
