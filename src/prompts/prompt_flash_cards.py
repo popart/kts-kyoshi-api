@@ -10,7 +10,7 @@ You will generate a short lesson from the student's input and save it by calling
 
 First fix any spelling or grammar errors in the student's input (that can't be attributed to vernacular speech) and pass that as the `student_input` argument.
 
-Then generate your response to the student. Your response could be a translation from Japanese to English, or it could be an explanation for a specific question from the student. Pass this response as the `tutor_response` argument. If the student input is not related to learning Japanese, then just pass an empty string.
+Then generate your response to the student. Your response could be a literal translation from Japanese to English, or it could be an explanation for a specific question from the student. Pass this response as the `tutor_response` argument. If the student input is not related to learning Japanese, then just pass an empty string.
 
 Finally generate a sequence of flash cards that would be helpful for the student to review later to go over your translation or explanation. Each flash card is a bite-sized unit to learn, such as a vocabulary word or grammar point. If the student gave you a Japanese sentence to translate, the cards should match the order of words in the sentence.
 
@@ -31,7 +31,7 @@ tools = [
                     },
                     "tutor_response": {
                         "type": "string",
-                        "description": "The tutor's response to the student. A translation or an answer to a pedagogical question. If the student_input was unrelated to language learning, then returns an empty string.",
+                        "description": "The tutor's response to the student. A literal translation or an answer to a pedagogical question. If the student_input was unrelated to language learning, then returns an empty string.",
                     },
                     "example_sentence": {
                         "type": "string",
@@ -89,11 +89,11 @@ examples.append(
     )
 )
 tutor_response_1 = """
-### Translation
+### Literal Translation
 
-"You know what the neighborhood says about you, right?"
+"You know how you are being talked about from the neighborhood, right?"
 
-### Detailed Breakdown
+### Literal Translation Breakdown
 
 - **お前(まえ)が**: "You" (subject marker)
 - **近所(きんじょ)から**: "from the neighborhood"
@@ -101,7 +101,7 @@ tutor_response_1 = """
   - **どう**: "how"
   - **言(い)われてる**: Passive form of 言う (to say), meaning "being talked about"
   - **か**: Question marker for the embedded question
-- **知(し)らない訳(わけ)じゃないだろ**: "it's not that I don't know, right?"
+- **知(し)らない訳(わけ)じゃないだろ**: "it's not that you don't know, right?"
   - **知(し)らない**: "don't know"
   - **訳(わけ)じゃない**: "it's not that" (double negative implying the speaker actually knows)
   - **だろ**: Informal form of でしょう, used to seek confirmation, similar to "right?" or "isn't it?"
@@ -239,6 +239,82 @@ examples.append(
                                     "negative form, it means 'to not "
                                     "know.'",
                                     "jlpt_level": "N5",
+                                },
+                            ],
+                        }
+                    ),
+                ),
+            )
+        ],
+    )
+)
+# Example 3
+examples.append(
+    chat_types.ChatMessage(role="user", content="彼が遅れたのは、電車が遅れたからだ")
+)
+tutor_response_3 = """
+### Literal Translation
+
+"(The fact) that he was late is because the train was delayed."
+
+### Literal Translation Breakdown
+
+- **彼(かれ)が遅(おそ)れたのは**: "(The fact) that he was late" (nominalized and marked as the topic)
+  - **彼(かれ)が**: "He" (subject marker)
+  - **遅(おそ)れた**: "was late"
+  - **の**: Nominalizer, turning the verb phrase "was late" into a noun phrase
+  - **は**: Topic marker, indicating that the nominalized phrase is the topic of the sentence
+- **電車(でんしゃ)が遅(おく)れたからだ**: "is because the train was delayed" 
+  - **電車(でんしゃ)が**: "train" (subject marker)
+  - **遅(おく)れた**: "was delayed"
+  - **から**: "because"
+  - **だ**: Informal copula, meaning "is"
+"""
+examples.append(
+    chat_types.ChatMessage(
+        role="assistant",
+        tool_calls=[
+            chat_types.ToolCall(
+                id="call_003",
+                type="function",
+                function=chat_types.Function(
+                    name="create_japanese_lesson",
+                    arguments=json.dumps(
+                        {
+                            "student_input": "彼(かれ)が遅(おそ)れたのは、電車(でんしゃ)が遅(おく)れたからだ。",
+                            "tutor_response": tutor_response_3,
+                            "example_sentence": "彼(かれ)が遅(おそ)れたのは、電車(でんしゃ)が遅(おく)れたからだ。",
+                            "example_sentence_translation": "The reason he was late is because the train was delayed.",
+                            "japanese_flash_cards": [
+                                {
+                                    "japanese_example": "彼(かれ)",
+                                    "dictionary_form": "彼(かれ)",
+                                    "jlpt_level": "N5",
+                                    "teaching_notes": "Pronoun: Means 'he' or 'him'.",
+                                },
+                                {
+                                    "japanese_example": "遅(おそ)れた",
+                                    "dictionary_form": "遅(おそ)れる",
+                                    "jlpt_level": "N5",
+                                    "teaching_notes": "Verb: Means 'to be late'.",
+                                },
+                                {
+                                    "japanese_example": "電車(でんしゃ)",
+                                    "dictionary_form": "電車(でんしゃ)",
+                                    "jlpt_level": "N5",
+                                    "teaching_notes": "Noun: Means 'train'.",
+                                },
+                                {
+                                    "japanese_example": "遅(おく)れた",
+                                    "dictionary_form": "遅(おく)れる",
+                                    "jlpt_level": "N5",
+                                    "teaching_notes": "Verb: Means 'to be delayed'.",
+                                },
+                                {
+                                    "japanese_example": "…からだ",
+                                    "dictionary_form": "から,だ",
+                                    "jlpt_level": "N5",
+                                    "teaching_notes": "Expression: Means 'because'. Combines から (because) with だ (informal copula).",
                                 },
                             ],
                         }
