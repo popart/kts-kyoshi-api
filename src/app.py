@@ -8,7 +8,7 @@ from dataclasses import asdict
 import flask
 import flask_cors
 import fsrs
-from sqlalchemy import create_engine
+import sqlalchemy
 from werkzeug.wrappers.response import Response
 
 from prompts.prompt_flash_cards import get_prompt_flash_cards
@@ -43,15 +43,35 @@ app.secret_key = SESSION_SECRET_KEY
 flask_cors.CORS(app, supports_credentials=True)
 
 # init app (ghetto DI)
-if ENV == "prod":
+if ENV != "test":
     CHAT_CLIENT = OpenAIChatClient()
 else:
     CHAT_CLIENT = FakeChatClient(response_type=os.getenv("CHAT_TYPE", "CHAT"))
+
+if ENV == "gcp":
+    unix_socket_path = os.environ[
+        "INSTANCE_UNIX_SOCKET"
+    ]
+    db_url = sqlalchemy.engine.url.URL.create(
+        drivername="postgresql+psycopg",
+        username="postgres",
+        password=DB_PASSWORD,
+        database="kyoshi",
+        query={"host": unix_socket_path},
+    )
+else:
+    db_url = sqlalchemy.engine.url.URL.create(
+        drivername="postgresql+psycopg",
+        username="postgres",
+        password=DB_PASSWORD,
+        host="localhost",
+        port=5432,
+        database="kyoshi",
+    )
+DB_ENGINE = sqlalchemy.create_engine(db_url)
+
 PROMPT_FLASHCARDS = get_prompt_flash_cards(CHAT_CLIENT)
 CHATS: dict[str, list[chat_types.ChatMessage]] = {}
-DB_ENGINE = create_engine(
-    f"postgresql+psycopg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:5432/kyoshi"
-)
 
 
 CHAT_LOOKBACK = -3

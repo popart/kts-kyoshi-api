@@ -46,7 +46,7 @@ class Prompt:
         chat_message: chat_types.ChatMessage = self.chat_client.complete_chat(
             input_messages=input_messages,
             tools=self.tools,
-            tool_choice="auto",
+            tool_choice="required",
         )
 
         return chat_message
