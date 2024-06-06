@@ -36,9 +36,15 @@ https://cloud.google.com/sql/docs/postgres/connect-run
 
 ## make cloud public
 https://cloud.google.com/blog/topics/developers-practitioners/how-create-public-cloud-run-services-when-domain-restricted-sharing-enforced
+(configure both index & 404 page to point to index.html)
+- allows react-router to do the routing
+- otherwise gcs will look for an actual web page called /chat or whatever
   
 ## frontend (hosting a static website)
-npm build
+```
+npm run build
+gsutil cp -r dist/* gs://kyoshi-web-dev
+```
 https://cloud.google.com/storage/docs/hosting-static-website
 note: certificates take 24 hours to generate
   certificate will only work if the domain you put there directs to your lb
