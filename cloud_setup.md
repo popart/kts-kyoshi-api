@@ -39,6 +39,9 @@ https://cloud.google.com/blog/topics/developers-practitioners/how-create-public-
 (configure both index & 404 page to point to index.html)
 - allows react-router to do the routing
 - otherwise gcs will look for an actual web page called /chat or whatever
+
+## add a load balancer to map domain name to cloud run
+https://cloud.google.com/load-balancing/docs/https/setup-global-ext-https-serverless
   
 ## frontend (hosting a static website)
 ```
