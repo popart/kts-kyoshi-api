@@ -20,6 +20,13 @@ def get_user_id(engine: Engine, openid_sub: str) -> uuid.UUID | None:
         return session.execute(stmt).scalar()
 
 
+def get_user_is_active(engine: Engine, user_id: uuid.UUID) -> bool:
+    stmt = select(db_models.User.is_active).where(db_models.User.user_id == user_id)
+
+    with Session(engine) as session:
+        return session.execute(stmt).scalar() or False
+
+
 def user_exists(engine: Engine, openid_sub: str) -> bool:
     stmt = exists().where(db_models.User.openid_sub == openid_sub)
 

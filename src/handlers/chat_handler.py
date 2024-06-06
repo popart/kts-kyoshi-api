@@ -1,4 +1,5 @@
 from dataclasses import asdict
+import datetime
 import uuid
 
 from sqlalchemy import desc, func, select, Engine
@@ -125,9 +126,22 @@ def get_chat_messages(
         ]
 
 
+def count_chat_messages(
+    engine: Engine, user_id: uuid.UUID, lookback_date: datetime.datetime
+) -> int:
+    stmt = (
+        select(func.count())
+        .select_from(db_models.ChatMessage)
+        .where(db_models.ChatMessage.user_id == user_id)
+        .where(db_models.ChatMessage.created_at > lookback_date)
+    )
+    with Session(engine) as session:
+        return session.execute(stmt).scalar() or 0
+
+
 def get_chat_message(
     engine: Engine, user_id: uuid.UUID, chat_id: uuid.UUID, chat_message_id: uuid.UUID
-) -> chat_types.ChatMessage:
+) -> chat_types.ChatMessage | None:
     stmt = (
         select(db_models.ChatMessage.content)
         .where(db_models.ChatMessage.user_id == user_id)

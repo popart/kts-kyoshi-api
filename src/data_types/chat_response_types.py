@@ -56,7 +56,6 @@ def chat_message_to_chat_message_response(
     elif chat_message.tool_calls:
         message_type = ChatMessageResponseType.FLASH_CARD_LESSON
         fn_args = json.loads(chat_message.tool_calls[0].function.arguments)
-        print(fn_args)
 
         flash_cards = [
             FlashCard(

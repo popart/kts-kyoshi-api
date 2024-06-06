@@ -2,7 +2,7 @@ import sys
 import os
 
 # Add the src/db_models directory to sys.path
-src_package = os.path.abspath(os.path.join(os.getcwd(), 'src'))
+src_package = os.path.abspath(os.path.join(os.getcwd(), "src"))
 sys.path.insert(0, src_package)
 
 from logging.config import fileConfig

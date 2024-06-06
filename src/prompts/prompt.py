@@ -41,8 +41,6 @@ class Prompt:
         """
         input_messages = self.base_messages.copy() + messages
 
-        logger.info(f"completing chat: {input_messages}")
-
         chat_message: chat_types.ChatMessage = self.chat_client.complete_chat(
             input_messages=input_messages,
             tools=self.tools,

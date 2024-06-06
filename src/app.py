@@ -1,9 +1,8 @@
-import json
+from datetime import datetime, timedelta
 import logging
 import os
 import sys
 import uuid
-from dataclasses import asdict
 
 import flask
 import flask_cors
@@ -49,9 +48,7 @@ else:
     CHAT_CLIENT = FakeChatClient(response_type=os.getenv("CHAT_TYPE", "CHAT"))
 
 if ENV == "gcp":
-    unix_socket_path = os.environ[
-        "INSTANCE_UNIX_SOCKET"
-    ]
+    unix_socket_path = os.environ["INSTANCE_UNIX_SOCKET"]
     db_url = sqlalchemy.engine.url.URL.create(
         drivername="postgresql+psycopg",
         username="postgres",
@@ -206,6 +203,15 @@ def chat_message(chat_id):
             for cmd in chat_messages_data
         ]
 
+    # POST
+    # check chat_messages free limit
+    if not user_handler.get_user_is_active(DB_ENGINE, user_id):
+        limit = 50
+        lookback_date = datetime.now() - timedelta(hours=24)
+        count = chat_handler.count_chat_messages(DB_ENGINE, user_id, lookback_date)
+        if count >= limit:
+            return flask.jsonify({"status": "LIMIT_EXCEEDED"}), 200
+
     # data to send to openAI
     # fetch most recent messages (the first X in date desc)
     input_messages = [cmd[1] for cmd in chat_messages_data[:CHAT_LOOKBACK]]
@@ -214,7 +220,6 @@ def chat_message(chat_id):
 
     data = flask.request.json
     message = data.get("message") if data else None
-    logger.info(f"Chat {chat_id} new message: {message}")
     new_chat_message = chat_types.ChatMessage(
         role="user",
         content=message,
@@ -262,7 +267,7 @@ def review_flash_card(flash_card_id):
         user_id = user_handler.get_user_id(DB_ENGINE, current_user_sub)
         assert user_id is not None
 
-        flash_card = flash_card_handler.review_flash_card(
+        flash_card_handler.review_flash_card(
             engine=DB_ENGINE,
             user_id=user_id,
             flash_card_id=flash_card_id,
@@ -413,7 +418,6 @@ def get_flash_card_counts():
         assert user_id is not None
 
         card_counts = flash_card_handler.get_flash_card_counts(DB_ENGINE, user_id)
-        print(card_counts)
 
         res = {"NEW": 0, "DUE": 0, "REVIEW": 0}
         for status, is_due, card_count in card_counts:

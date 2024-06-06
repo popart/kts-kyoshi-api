@@ -163,7 +163,10 @@ def get_flash_cards_all(engine: Engine, user_id: uuid.UUID):
 
 
 def get_flash_card_counts(engine: Engine, user_id: uuid.UUID):
-    is_due = case((db_models.FlashCard.fsrs_due_at < datetime.now(tz=timezone.utc), True), else_=False).label("is_due")
+    is_due = case(
+        (db_models.FlashCard.fsrs_due_at < datetime.now(tz=timezone.utc), True),
+        else_=False,
+    ).label("is_due")
     stmt = (
         select(
             db_models.FlashCard.fsrs_state,
