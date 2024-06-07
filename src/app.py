@@ -38,9 +38,6 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "mypassword")
 # setup flask app
 app = flask.Flask(__name__)
 app.secret_key = SESSION_SECRET_KEY
-app.config["SESSION_COOKIE_SAMESITE"] = "None"
-app.config["SESSION_COOKIE_SECURE"] = True
-app.config["SESSION_COOKIE_DOMAIN"] = "goginko.com"
 
 flask_cors.CORS(app, supports_credentials=True)
 
@@ -59,6 +56,9 @@ if ENV == "gcp":
         database="kyoshi",
         query={"host": unix_socket_path},
     )
+    app.config["SESSION_COOKIE_SAMESITE"] = "None"
+    app.config["SESSION_COOKIE_SECURE"] = True
+    app.config["SESSION_COOKIE_DOMAIN"] = "goginko.com"
 else:
     db_url = sqlalchemy.engine.url.URL.create(
         drivername="postgresql+psycopg",
