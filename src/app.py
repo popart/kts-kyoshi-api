@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import json
 import logging
 import os
 import sys
@@ -37,9 +38,9 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "mypassword")
 # setup flask app
 app = flask.Flask(__name__)
 app.secret_key = SESSION_SECRET_KEY
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_DOMAIN'] = "goginko.com"
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
+app.config["SESSION_COOKIE_SECURE"] = True
+app.config["SESSION_COOKIE_DOMAIN"] = "goginko.com"
 
 flask_cors.CORS(app, supports_credentials=True)
 
@@ -231,10 +232,16 @@ def chat_message(chat_id):
     # first get flash_cards messages (openAI format)
     try:
         output_message = PROMPT_FLASHCARDS.fetch(input_messages)
+        print(">............................<")
+        print(output_message)
+        print(">............................<")
 
-        if not (output_message.content or output_message.tool_calls):
-            logger.error("Bad output message: %s", str(output_message))
-            flask.abort(Response("Couldn't handle that message", 404))
+        if not (output_message.tool_calls):
+            return flask.jsonify({"status": "ERROR"}), 200
+
+        tool_call_args = json.loads(output_message.tool_calls[0].function.arguments)
+        if not (tool_call_args["tutor_response"]):
+            return flask.jsonify({"status": "ERROR"}), 200
 
         chat_handler.save_chat_messages(
             engine=DB_ENGINE,
@@ -244,7 +251,7 @@ def chat_message(chat_id):
         )
     except Exception as e:
         logger.error(e, exc_info=True)
-        flask.abort(Response("Couldn't handle that message", 404))
+        flask.abort(Response("Couldn't handle that message", 500))
 
     return flask.jsonify({"status": "SUCCESS"}), 200
 
