@@ -35,7 +35,7 @@ tools = [
                     },
                     "example_sentence": {
                         "type": "string",
-                        "description": "A sentence in japanese that is used to generate the lesson of flash cards. If the student_input was already a Japanese sentence, then the `example_sentence` duplicates the `student_input`. Otherwise, the tutor makes up an example sentence to help teach the student something they asked about.",
+                        "description": "A sentence or sentence fragment in japanese that is used to generate the lesson of flash cards. If the student_input was already a Japanese sentence or fragment of text, then the `example_sentence` duplicates the `student_input`. The tutor can make up an example sentence or other fragment of japanese text to help teach the student something they asked about.",
                     },
                     "example_sentence_translation": {
                         "type": "string",
