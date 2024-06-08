@@ -1,3 +1,4 @@
+## create db
 - created a cloud sql postgres 15 db
   - private IP (just created default network while going through wizard)
   - named it `kyoshi-dev`
@@ -12,9 +13,12 @@ https://cloud.google.com/sdk/docs/install
 gcloud auth login --update-adc
 gcloud auth configure-docker us-docker.pkg.dev
 
-docker buildx build  --platform linux/amd64 -t kyoshi:dev-amd64 .
-docker image tag kyoshi:dev-amd64 us-docker.pkg.dev/kyoshi-dev/kyoshi/kyoshiapi:dev
-docker image push us-docker.pkg.dev/kyoshi-dev/kyoshi/kyoshiapi:dev
+docker buildx build  --platform linux/amd64 -t us-docker.pkg.dev/kyoshi-dev/kyoshi/kyoshi-api:dev
+docker image push us-docker.pkg.dev/kyoshi-dev/kyoshi/kyoshi-api:dev
+
+
+docker buildx build  --platform linux/amd64 -t us-docker.pkg.dev/kyoshi-prd/kyoshi/kyoshi-api:prd .
+docker image push us-docker.pkg.dev/kyoshi-prd/kyoshi/kyoshi-api:prd
 ```
 
 ## connect to cloud sql
@@ -24,12 +28,16 @@ install cloud-sql-proxy https://cloud.google.com/sql/docs/mysql/connect-auth-pro
 gcloud sql instances describe kyoshi-dev --format='value(connectionName)'
 
 ./cloud-sql-proxy kyoshi-dev:us-central1:kyoshi-dev
+./cloud-sql-proxy kyoshi-prd:us-central1:kyoshi-prd
 ```
 For now, use the public ip. You can enable it in Cloud SQL Console > Connections > Network.
 Later, maybe setup a VM or you shoudl be able to create a VPN in GCP. Then use wireguard or something to connect to it.
 But if you have public ip and no authorized networks, you still need cloud-sql-proxy to connect, so that's probably fine.
 
 Update password in alembic.ini and then run `alembic upgrade head`
+
+## cloud run
+create session secret: `openssl rand -base64 16`
 
 ## connect cloud run to cloud sql
 https://cloud.google.com/sql/docs/postgres/connect-run
@@ -45,15 +53,19 @@ https://cloud.google.com/load-balancing/docs/https/setup-global-ext-https-server
   
 ## frontend (hosting a static website)
 ```
+# set the src/config.ts `API_BASE_URL = "https://dev-api.goginko.com"`
 npm run build
 gsutil cp -r dist/* gs://kyoshi-web-dev
 ```
 https://cloud.google.com/storage/docs/hosting-static-website
+organization policies: temporarily override to make bucket public
+
 note: certificates take 24 hours to generate
   certificate will only work if the domain you put there directs to your lb
   so don't add random domains
 follow instructions exactly!
 need to use premium tier network (or else can only connect from one region)
+
 
 ## google sign in
 OAuth 2.0 clients for web apps must use redirect URIs and JavaScript origins that are compliant with Google’s validation rules, including using the HTTPS scheme. 
