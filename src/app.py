@@ -394,15 +394,24 @@ def get_flash_cards(flash_card_status: str):
         user_id = user_handler.get_user_id(DB_ENGINE, current_user_sub)
         assert user_id is not None
 
+        user_settings = user_handler.get_user_settings(DB_ENGINE, user_id)
+        show_reverse = user_settings.get("show_reverse")
+
         assert flash_card_status is not None
         flash_card_status = flash_card_status.upper()
 
         if flash_card_status == "NEW":
-            cards = flash_card_handler.get_flash_cards_new(DB_ENGINE, user_id)
+            cards = flash_card_handler.get_flash_cards_new(
+                DB_ENGINE, user_id, show_reverse=show_reverse
+            )
         elif flash_card_status == "REVIEW":
-            cards = flash_card_handler.get_flash_cards_review(DB_ENGINE, user_id)
+            cards = flash_card_handler.get_flash_cards_review(
+                DB_ENGINE, user_id, show_reverse=show_reverse
+            )
         elif flash_card_status == "ALL":
-            cards = flash_card_handler.get_flash_cards_all(DB_ENGINE, user_id)
+            cards = flash_card_handler.get_flash_cards_all(
+                DB_ENGINE, user_id, show_reverse=show_reverse
+            )
         else:
             flask.abort(Response("Invalid status", 404))
     except AssertionError:
@@ -426,7 +435,12 @@ def get_flash_card_counts():
         user_id = user_handler.get_user_id(DB_ENGINE, current_user_sub)
         assert user_id is not None
 
-        card_counts = flash_card_handler.get_flash_card_counts(DB_ENGINE, user_id)
+        user_settings = user_handler.get_user_settings(DB_ENGINE, user_id)
+        show_reverse = user_settings.get("show_reverse")
+
+        card_counts = flash_card_handler.get_flash_card_counts(
+            DB_ENGINE, user_id, show_reverse=show_reverse
+        )
 
         res = {"NEW": 0, "DUE": 0, "REVIEW": 0}
         for status, is_due, card_count in card_counts:

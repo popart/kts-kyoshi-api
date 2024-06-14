@@ -3,7 +3,7 @@
 import uuid
 
 from sqlalchemy import Boolean, Column, String, DateTime, text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
 
 from db_models import declarative_base
@@ -20,3 +20,4 @@ class User(Base):
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+    settings = Column(JSONB, nullable=False, server_default=text("'{}'::JSONB"))

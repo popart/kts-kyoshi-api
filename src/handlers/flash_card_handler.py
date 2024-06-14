@@ -36,36 +36,40 @@ def create_or_update_flash_card(
 
     fsrs_card = fsrs.Card()
 
-    existing_instance_stmt = (
-        select(db_models.FlashCard)
-        .where(db_models.FlashCard.user_id == user_id)
-        .where(db_models.FlashCard.chat_id == chat_id)
-        .where(db_models.FlashCard.chat_message_id == chat_message_id)
-        .where(db_models.FlashCard.flash_card_index == flash_card_index)
-        .with_for_update(nowait=True)
-    )
-    with Session(engine) as session:
-        instance = session.execute(existing_instance_stmt).scalar_one_or_none()
-        if instance:
-            instance.is_active = is_active
-            # whenever card is bookmarked, it should show up in new pile
-            # but don't reset fsrs stats or due date
-            instance.fsrs_state = fsrs.State.New.value
-        else:
-            instance = db_models.FlashCard(
-                user_id=user_id,
-                chat_id=chat_id,
-                chat_message_id=chat_message_id,
-                flash_card_index=flash_card_index,
-                content=content,
-                jlpt_level=jlpt_level,
-                fsrs=fsrs_card.to_dict(),
-                fsrs_due_at=fsrs_card.due,
-                fsrs_state=fsrs_card.state.value,
-                is_active=is_active,
-            )
-        session.add(instance)
-        session.commit()
+    # create normal & reverse flash cards
+    for reverse in [True, False]:
+        existing_instance_stmt = (
+            select(db_models.FlashCard)
+            .where(db_models.FlashCard.user_id == user_id)
+            .where(db_models.FlashCard.chat_id == chat_id)
+            .where(db_models.FlashCard.chat_message_id == chat_message_id)
+            .where(db_models.FlashCard.flash_card_index == flash_card_index)
+            .where(db_models.FlashCard.reverse == reverse)
+            .with_for_update(nowait=True)
+        )
+        with Session(engine) as session:
+            instance = session.execute(existing_instance_stmt).scalar_one_or_none()
+            if instance:
+                instance.is_active = is_active
+                # whenever card is bookmarked, it should show up in new pile
+                # but don't reset fsrs stats or due date
+                instance.fsrs_state = fsrs.State.New.value
+            else:
+                instance = db_models.FlashCard(
+                    user_id=user_id,
+                    chat_id=chat_id,
+                    chat_message_id=chat_message_id,
+                    flash_card_index=flash_card_index,
+                    content=content,
+                    jlpt_level=jlpt_level,
+                    fsrs=fsrs_card.to_dict(),
+                    fsrs_due_at=fsrs_card.due,
+                    fsrs_state=fsrs_card.state.value,
+                    is_active=is_active,
+                    reverse=reverse,
+                )
+            session.add(instance)
+            session.commit()
 
 
 def delete_flash_card(
@@ -121,7 +125,7 @@ def review_flash_card(
         session.commit()
 
 
-def get_flash_cards_new(engine: Engine, user_id: uuid.UUID):
+def get_flash_cards_new(engine: Engine, user_id: uuid.UUID, show_reverse: bool = False):
     # TODO: paginate
     stmt = (
         select(db_models.FlashCard)
@@ -132,11 +136,15 @@ def get_flash_cards_new(engine: Engine, user_id: uuid.UUID):
         .order_by(db_models.FlashCard.created_at)
         .limit(100)
     )
+    if not show_reverse:
+        stmt = stmt.where(db_models.FlashCard.reverse == False)
     with Session(engine) as session:
         return [row[0] for row in session.execute(stmt).fetchall()]
 
 
-def get_flash_cards_review(engine: Engine, user_id: uuid.UUID):
+def get_flash_cards_review(
+    engine: Engine, user_id: uuid.UUID, show_reverse: bool = False
+):
     stmt = (
         select(db_models.FlashCard)
         .where(db_models.FlashCard.user_id == user_id)
@@ -146,11 +154,13 @@ def get_flash_cards_review(engine: Engine, user_id: uuid.UUID):
         .order_by(db_models.FlashCard.fsrs_due_at)
         .limit(10)
     )
+    if not show_reverse:
+        stmt = stmt.where(db_models.FlashCard.reverse == False)
     with Session(engine) as session:
         return [row[0] for row in session.execute(stmt).fetchall()]
 
 
-def get_flash_cards_all(engine: Engine, user_id: uuid.UUID):
+def get_flash_cards_all(engine: Engine, user_id: uuid.UUID, show_reverse: bool = False):
     """TODO: paginate"""
     stmt = (
         select(db_models.FlashCard)
@@ -158,11 +168,15 @@ def get_flash_cards_all(engine: Engine, user_id: uuid.UUID):
         .order_by(db_models.FlashCard.created_at)
         .limit(100)
     )
+    if not show_reverse:
+        stmt = stmt.where(db_models.FlashCard.reverse == False)
     with Session(engine) as session:
         return [row[0] for row in session.execute(stmt).fetchall()]
 
 
-def get_flash_card_counts(engine: Engine, user_id: uuid.UUID):
+def get_flash_card_counts(
+    engine: Engine, user_id: uuid.UUID, show_reverse: bool = False
+):
     is_due = case(
         (db_models.FlashCard.fsrs_due_at < datetime.now(tz=timezone.utc), True),
         else_=False,
@@ -177,5 +191,7 @@ def get_flash_card_counts(engine: Engine, user_id: uuid.UUID):
         .where(db_models.FlashCard.is_active)
         .group_by(db_models.FlashCard.fsrs_state, is_due)
     )
+    if not show_reverse:
+        stmt = stmt.where(db_models.FlashCard.reverse == False)
     with Session(engine) as session:
         return session.execute(stmt).all()
