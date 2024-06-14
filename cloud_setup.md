@@ -13,7 +13,7 @@ https://cloud.google.com/sdk/docs/install
 gcloud auth login --update-adc
 gcloud auth configure-docker us-docker.pkg.dev
 
-docker buildx build  --platform linux/amd64 -t us-docker.pkg.dev/kyoshi-dev/kyoshi/kyoshi-api:dev
+docker buildx build  --platform linux/amd64 -t us-docker.pkg.dev/kyoshi-dev/kyoshi/kyoshi-api:dev .
 docker image push us-docker.pkg.dev/kyoshi-dev/kyoshi/kyoshi-api:dev
 
 

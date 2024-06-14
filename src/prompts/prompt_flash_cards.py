@@ -127,7 +127,7 @@ examples.append(
                                     "dictionary_form": "お前(まえ)",
                                     "jlpt_level": "N5",
                                     "teaching_notes": "Pronoun: A casual or rude way to say "
-                                    "\"you\". Often used among friends "
+                                    '"you". Often used among friends '
                                     "or in confrontational "
                                     "situations.",
                                 },
@@ -135,13 +135,13 @@ examples.append(
                                     "japanese_example": "近(きん)所(じょ)",
                                     "dictionary_form": "近(きん)所(じょ)",
                                     "jlpt_level": "N5",
-                                    "teaching_notes": "Noun: \"neighborhood\" or \"vicinity\".",
+                                    "teaching_notes": 'Noun: "neighborhood" or "vicinity".',
                                 },
                                 {
                                     "japanese_example": "言(い)われてる(い)",
                                     "dictionary_form": "言(い)われる",
                                     "jlpt_level": "N4",
-                                    "teaching_notes": "Verb: \"to be said\". Passive form of 言う (to say).",
+                                    "teaching_notes": 'Verb: "to be said". Passive form of 言う (to say).',
                                 },
                                 {
                                     "japanese_example": "知(し)らない訳(わけ)じゃない",
@@ -151,18 +151,18 @@ examples.append(
                                     "don't know.\" A double negative "
                                     "form used to imply that the "
                                     "speaker actually knows "
-                                    "something. \"訳(わけ)\"  means "
-                                    "\"reason\" or \"circumstance.",
+                                    'something. "訳(わけ)"  means '
+                                    '"reason" or "circumstance.',
                                 },
                                 {
                                     "japanese_example": "だろ",
                                     "dictionary_form": "だろう",
                                     "jlpt_level": "N4",
                                     "teaching_notes": "Auxiliary: A less formal version "
-                                    "of \"でしょう\", used to express "
+                                    'of "でしょう", used to express '
                                     "probability or expectation, "
-                                    "similar to \"right?\" or \"isn't "
-                                    "it?\" in English.",
+                                    'similar to "right?" or "isn\'t '
+                                    'it?" in English.',
                                 },
                             ],
                         }
@@ -193,20 +193,20 @@ examples.append(
                             "another sentence. In Japanese, embedded questions often "
                             "use the particle か to indicate the question within "
                             "the sentence. For example, in the sentence \"I don't know "
-                            "where he is,\" the embedded question is \"where he is.",
+                            'where he is," the embedded question is "where he is.',
                             "example_sentence": "彼(かれ)がどこにいるか知(し)らない。",
                             "example_sentence_translation": "I don't know where he is.",
                             "japanese_flash_cards": [
                                 {
                                     "japanese_example": "彼(かれ)",
                                     "dictionary_form": "彼(かれ)",
-                                    "teaching_notes": "Pronoun: \"he\" or \"him\".",
+                                    "teaching_notes": 'Pronoun: "he" or "him".',
                                     "jlpt_level": "N5",
                                 },
                                 {
                                     "japanese_example": "どこ",
                                     "dictionary_form": "どこ",
-                                    "teaching_notes": "Interrogative: \"where\".",
+                                    "teaching_notes": 'Interrogative: "where".',
                                     "jlpt_level": "N5",
                                 },
                                 {
@@ -219,8 +219,8 @@ examples.append(
                                 {
                                     "japanese_example": "いる",
                                     "dictionary_form": "いる",
-                                    "teaching_notes": "Verb: \"to be\" or \"to "
-                                    "exist\" (for animate objects).",
+                                    "teaching_notes": 'Verb: "to be" or "to '
+                                    'exist" (for animate objects).',
                                     "jlpt_level": "N5",
                                 },
                                 {
@@ -234,7 +234,7 @@ examples.append(
                                 {
                                     "japanese_example": "知(し)らない",
                                     "dictionary_form": "知(し)る",
-                                    "teaching_notes": "Verb: \"to not know.\" Negative form of \"to know\".",
+                                    "teaching_notes": 'Verb: "to not know." Negative form of "to know".',
                                     "jlpt_level": "N5",
                                 },
                             ],
@@ -287,31 +287,31 @@ examples.append(
                                     "japanese_example": "彼(かれ)",
                                     "dictionary_form": "彼(かれ)",
                                     "jlpt_level": "N5",
-                                    "teaching_notes": "Pronoun: \"he\" or \"him\".",
+                                    "teaching_notes": 'Pronoun: "he" or "him".',
                                 },
                                 {
                                     "japanese_example": "遅(おそ)れた",
                                     "dictionary_form": "遅(おそ)れる",
                                     "jlpt_level": "N5",
-                                    "teaching_notes": "Verb (ichidan): \"was late\", past tense of \"to be late\".",
+                                    "teaching_notes": 'Verb (ichidan): "was late", past tense of "to be late".',
                                 },
                                 {
                                     "japanese_example": "電(でん)車(しゃ)",
                                     "dictionary_form": "電(でん)車(しゃ)",
                                     "jlpt_level": "N5",
-                                    "teaching_notes": "Noun: \"train\".",
+                                    "teaching_notes": 'Noun: "train".',
                                 },
                                 {
                                     "japanese_example": "遅(おく)れた",
                                     "dictionary_form": "遅(おく)れる",
                                     "jlpt_level": "N5",
-                                    "teaching_notes": "Verb (ichidan): \"was delayed\", past tense of \"to be delayed\"",
+                                    "teaching_notes": 'Verb (ichidan): "was delayed", past tense of "to be delayed"',
                                 },
                                 {
                                     "japanese_example": "…からだ",
                                     "dictionary_form": "から,だ",
                                     "jlpt_level": "N5",
-                                    "teaching_notes": "Expression: \"because\". Combines から (because) with だ (informal copula).",
+                                    "teaching_notes": 'Expression: "because". Combines から (because) with だ (informal copula).',
                                 },
                             ],
                         }
@@ -324,4 +324,6 @@ examples.append(
 
 
 def get_prompt_flash_cards(chat_client: AbstractChatClient):
-    return Prompt(chat_client=chat_client, role=role, tools=tools, examples=examples[0:2])
+    return Prompt(
+        chat_client=chat_client, role=role, tools=tools, examples=examples[0:2]
+    )
