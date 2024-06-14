@@ -33,10 +33,12 @@ class FlashCardContent:
 class FlashCardResponse:
     flash_card_id: uuid.UUID
     flash_card_content: FlashCardContent
+    reverse: bool
 
 
 def flash_card_to_flash_card_response(card: db_models.FlashCard) -> FlashCardResponse:
     return FlashCardResponse(
         flash_card_id=card.flash_card_id,
         flash_card_content=FlashCardContent(**card.content),
+        reverse=card.reverse,
     )

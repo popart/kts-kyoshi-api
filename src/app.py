@@ -38,6 +38,7 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "mypassword")
 # setup flask app
 app = flask.Flask(__name__)
 app.secret_key = SESSION_SECRET_KEY
+app.config["MAX_CONTENT_LENGTH"] = 4 * 1000 * 1000  # 4 MB
 
 flask_cors.CORS(app, supports_credentials=True)
 
@@ -231,8 +232,11 @@ def chat_message(chat_id):
 
     # first get flash_cards messages (openAI format)
     try:
-        output_message = PROMPT_FLASHCARDS.fetch(input_messages)
+        print(">.............input...............<")
+        print(input_messages)
         print(">............................<")
+        output_message = PROMPT_FLASHCARDS.fetch(input_messages)
+        print(">.............output...............<")
         print(output_message)
         print(">............................<")
 
@@ -451,6 +455,27 @@ def get_flash_card_counts():
                     res["DUE"] += card_count
                 res["REVIEW"] += card_count
         return flask.jsonify(res), 200
+    except AssertionError:
+        flask.abort(Response("Invalid request", 404))
+
+
+@app.route("/user_settings", methods=["GET", "POST"])
+def user_settings():
+    current_user_sub = flask.session.get("openid_sub")
+    if not current_user_sub:
+        flask.abort(Response("Please log in", 401))
+
+    try:
+        user_id = user_handler.get_user_id(DB_ENGINE, current_user_sub)
+        assert user_id is not None
+
+        if flask.request.method == "POST":
+            data = flask.request.json
+            user_handler.save_user_settings(DB_ENGINE, user_id, data)
+
+        user_settings = user_handler.get_user_settings(DB_ENGINE, user_id)
+        return flask.jsonify(user_settings), 200
+
     except AssertionError:
         flask.abort(Response("Invalid request", 404))
 

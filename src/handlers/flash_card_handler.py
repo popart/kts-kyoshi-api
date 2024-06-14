@@ -37,7 +37,7 @@ def create_or_update_flash_card(
     fsrs_card = fsrs.Card()
 
     # create normal & reverse flash cards
-    for reverse in [True, False]:
+    for reverse in [False, True]:
         existing_instance_stmt = (
             select(db_models.FlashCard)
             .where(db_models.FlashCard.user_id == user_id)

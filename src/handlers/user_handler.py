@@ -1,7 +1,7 @@
 from functools import lru_cache
 import uuid
 
-from sqlalchemy import exists, select, Engine
+from sqlalchemy import exists, select, update, Engine
 from sqlalchemy.orm import Session
 
 import db_models
@@ -32,6 +32,19 @@ def get_user_settings(engine: Engine, user_id: uuid.UUID) -> bool:
 
     with Session(engine) as session:
         return session.execute(stmt).scalar()
+
+
+def save_user_settings(engine: Engine, user_id: uuid.UUID, settings: dict) -> bool:
+    print(settings)
+    stmt = (
+        update(db_models.User)
+        .where(db_models.User.user_id == user_id)
+        .values(settings=settings)
+    )
+
+    with Session(engine) as session:
+        session.execute(stmt)
+        session.commit()
 
 
 def user_exists(engine: Engine, openid_sub: str) -> bool:
