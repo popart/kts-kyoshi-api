@@ -165,7 +165,8 @@ examples.append(
                                     'it?" in English.',
                                 },
                             ],
-                        }
+                        },
+                        ensure_ascii=False,
                     ),
                 ),
             )
@@ -238,7 +239,8 @@ examples.append(
                                     "jlpt_level": "N5",
                                 },
                             ],
-                        }
+                        },
+                        ensure_ascii=False,
                     ),
                 ),
             )

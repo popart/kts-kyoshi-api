@@ -218,7 +218,7 @@ def chat_message(chat_id):
 
     # data to send to openAI
     # fetch most recent messages (the first X in date desc)
-    input_messages = [cmd[1] for cmd in chat_messages_data[:CHAT_LOOKBACK]]
+    input_messages = [cmd[1] for cmd in chat_messages_data[CHAT_LOOKBACK:]]
     # reverse back into chronological order
     input_messages.reverse()
 
@@ -232,13 +232,9 @@ def chat_message(chat_id):
 
     # first get flash_cards messages (openAI format)
     try:
-        print(">.............input...............<")
-        print(input_messages)
-        print(">............................<")
+        logger.info("input_messages=%s", input_messages)
         output_message = PROMPT_FLASHCARDS.fetch(input_messages)
-        print(">.............output...............<")
-        print(output_message)
-        print(">............................<")
+        logger.info("output_message=%s", output_message)
 
         if not (output_message.tool_calls):
             return flask.jsonify({"status": "ERROR"}), 200

@@ -52,6 +52,8 @@ class OpenAIChatClient(AbstractChatClient):
             tool_choice=tool_choice,
             max_tokens=self.MAX_TOKENS,
         )
+        self._log_tokens(response)
+
         choice = response.choices[0]
 
         if choice.finish_reason in ["stop", "tool_calls"]:
@@ -99,3 +101,12 @@ class OpenAIChatClient(AbstractChatClient):
             "tool_call_id": tool_call.id,
             "content": "SUCCESS",
         }
+
+    def _log_tokens(self, response):
+        usage = response.usage
+        logger.info(
+            "Token usage: prompt=%d, completion=%d, total=%d",
+            usage.prompt_tokens,
+            usage.completion_tokens,
+            usage.total_tokens,
+        )
