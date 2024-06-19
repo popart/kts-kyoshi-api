@@ -75,7 +75,7 @@ PROMPT_FLASHCARDS = get_prompt_flash_cards(CHAT_CLIENT)
 CHATS: dict[str, list[chat_types.ChatMessage]] = {}
 
 
-CHAT_LOOKBACK = -3
+CHAT_LOOKBACK = 3
 
 
 @app.route("/", methods=["GET"])
@@ -218,7 +218,7 @@ def chat_message(chat_id):
 
     # data to send to openAI
     # fetch most recent messages (the first X in date desc)
-    input_messages = [cmd[1] for cmd in chat_messages_data[CHAT_LOOKBACK:]]
+    input_messages = [cmd[1] for cmd in chat_messages_data[:CHAT_LOOKBACK]]
     # reverse back into chronological order
     input_messages.reverse()
 
