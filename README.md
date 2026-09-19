@@ -1,8 +1,12 @@
 # kts-kyoshi-server
 
 ## Basic deps
-pyenv
-poetry
+uv
+
+## setup
+```
+uv sync
+```
 
 ## postgres
 ```
@@ -30,8 +34,8 @@ need to create database manually
 `target_metadata = declarative_base.Base.metadata`
 
 ```
-poetry run alembic revision --autogenerate -m "create User table"
-poetry run alembic upgrade head
+uv run alembic revision --autogenerate -m "create User table"
+uv run alembic upgrade head
 ```
 
 DB design:
@@ -40,7 +44,7 @@ DB design:
 - uuids instead of ints for PKs (enables sharding later)
 
 Drop all alembic tables:
-`poetry run python -m scripts.drop_all_tables`
+`uv run python -m scripts.drop_all_tables`
 
 # docker build
 ```

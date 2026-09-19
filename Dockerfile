@@ -1,19 +1,17 @@
 # Use an official Python runtime as a parent image
 FROM python:3.12.3-bookworm
 
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 # Set the working directory in the container
 WORKDIR /app
 
-# Install poetry
-RUN apt update
-RUN apt install pipx -y
-RUN pipx install poetry
-ENV PATH=/root/.local/bin:$PATH
+# Copy dependency files first to leverage layer caching
+COPY ./pyproject.toml ./uv.lock /app/
 
-# Copy the current directory contents into the container at /app
-COPY ./pyproject.toml /app
-COPY ./poetry.lock /app
-RUN poetry install
+# Install dependencies (no dev group, no project itself)
+RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy code last to save on caching
 COPY ./src /app
@@ -22,4 +20,4 @@ COPY ./src /app
 EXPOSE 5555
 
 # Run app.py when the container launches
-CMD ["poetry", "run", "python", "app.py"]
+CMD ["uv", "run", "--no-sync", "python", "app.py"]
