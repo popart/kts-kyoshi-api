@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.12.3-bookworm
+FROM python:3.14-slim-trixie
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/

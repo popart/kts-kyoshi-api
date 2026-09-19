@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = [{ name = "Andrew Wong", email = "wongwong.wong@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
     "flask>=3.0.3,<4",
     "flask-cors>=4.0.1,<5",

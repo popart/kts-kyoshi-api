@@ -10,11 +10,11 @@ uv sync
 
 ## postgres
 ```
-docker pull postgres:16.2-bookworm
+docker pull postgres:18.6-trixie
 
 export DB_NAME="kyoshi_db"
 
-docker run --name $DB_NAME -e POSTGRES_PASSWORD=mypassword -e POSTGRES_INITDB_ARGS="--encoding=UTF8" -p 5432:5432 -d postgres:16.2-bookworm
+docker run --name $DB_NAME -e POSTGRES_PASSWORD=mypassword -e POSTGRES_INITDB_ARGS="--encoding=UTF8" -p 5432:5432 -d postgres:18.6-trixie
 
 psql -h localhost -p 5432 -U postgres
 
@@ -34,7 +34,10 @@ need to create database manually
 `target_metadata = declarative_base.Base.metadata`
 
 ```
+# create a new migration by diffing against DB
 uv run alembic revision --autogenerate -m "create User table"
+
+# run existing migrations
 uv run alembic upgrade head
 ```
 
@@ -46,11 +49,25 @@ DB design:
 Drop all alembic tables:
 `uv run python -m scripts.drop_all_tables`
 
+# local run
+```bash
+ENV=test SESSION_SECRET_KEY=dev GOOGLE_OAUTH_CLIENT_ID=dev uv run python src/app.py
+```
+
 # docker build
 ```
 docker build -t kyoshi:dev .
 
-docker run -d --name kyoshi_api -p 5555:5555 -e MY_SECRET_KEY=$(gcloud secrets versions access latest --secret="YOUR_SECRET_NAME") kyoshi:dev
+# using google secret
+gcloud auth login
+docker run -d --name kyoshi_api -p 5555:5555 -e SESSION_SECRET_KEY=$(gcloud secrets versions access latest --secret="YOUR_SECRET_NAME") kyoshi:dev
+
+# but you can also just use a made up secret
+docker run -d --name kyoshi_api -p 5555:5555 \
+  -e ENV=test \
+  -e SESSION_SECRET_KEY=dev \
+  -e GOOGLE_OAUTH_CLIENT_ID=dev \
+  kyoshi:dev
 ```
 secrets configured in cloud run. pulled at instance startup
 then they'll only live in running instances env.
