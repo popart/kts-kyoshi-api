@@ -16,7 +16,8 @@ services:
       DB_PASSWORD: mypassword
       SESSION_SECRET_KEY:
       GOOGLE_OAUTH_CLIENT_ID:
-      OPENAI_API_KEY:
+      QWEN_API_KEY:
+      LLM_MODEL: qwen3.8-flash
     depends_on:
       - db
     ports:
