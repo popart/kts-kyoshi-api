@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 import enum
-import json
 import uuid
 
 from data_types import chat_types
@@ -51,20 +50,18 @@ def chat_message_to_chat_message_response(
     flash_card_lesson = None
     message_type = ChatMessageResponseType.UNDEFINED
 
-    if chat_message.content:
-        message_type = ChatMessageResponseType.MESSAGE
-    elif chat_message.tool_calls:
+    if chat_message.lesson:
         message_type = ChatMessageResponseType.FLASH_CARD_LESSON
-        fn_args = json.loads(chat_message.tool_calls[0].function.arguments)
+        lesson = chat_message.lesson
 
         flash_cards = [
             FlashCard(
-                japanese_example=card.get("japanese_example"),
-                dictionary_form=card.get("dictionary_form"),
-                teaching_notes=card.get("teaching_notes"),
-                jlpt_level=card.get("jlpt_level"),
+                japanese_example=card.japanese_example,
+                dictionary_form=card.dictionary_form,
+                teaching_notes=card.teaching_notes,
+                jlpt_level=card.jlpt_level,
             )
-            for card in fn_args.get("japanese_flash_cards", [])
+            for card in lesson.japanese_flash_cards
         ]
 
         if saved_flash_card_indexes:
@@ -72,12 +69,14 @@ def chat_message_to_chat_message_response(
                 flash_cards[i].is_saved = True
 
         flash_card_lesson = FlashCardLesson(
-            student_input=fn_args.get("student_input"),
-            tutor_response=fn_args.get("tutor_response"),
-            example_sentence=fn_args.get("example_sentence"),
-            example_sentence_translation=fn_args.get("example_sentence_translation"),
+            student_input=lesson.student_input,
+            tutor_response=lesson.tutor_response,
+            example_sentence=lesson.example_sentence,
+            example_sentence_translation=lesson.example_sentence_translation,
             flash_cards=flash_cards,
         )
+    elif chat_message.content:
+        message_type = ChatMessageResponseType.MESSAGE
 
     return ChatMessageResponse(
         chat_id=chat_id,

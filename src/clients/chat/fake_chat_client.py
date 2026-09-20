@@ -1,15 +1,19 @@
-import json
 from typing import override
 
-from data_types import chat_types
 from clients.chat.abstract_chat_client import AbstractChatClient
+from data_types import chat_types
 
-SAMPLE_FLASH_CARDS = {
+
+SAMPLE_LESSON = {
+    "student_input": "しょうがない、それでいこう",
+    "tutor_response": "It can't be helped, let's go with that.",
+    "example_sentence": "しょうがない、それでいこう",
+    "example_sentence_translation": "It can't be helped, let's go with that.",
     "japanese_flash_cards": [
         {
             "japanese_example": "しょうがない",
-            "dictionary_form": "仕方がない(しかたがない)",
-            "teaching_notes": "Expression: 'It can't be helped' or 'nothing can be done about it.' Often used to express resignation or acceptance of a situation. A contraction where '仕方' means 'method' or 'way,' and 'がない' means 'there is none.'",
+            "dictionary_form": "仕方(しかた)がない",
+            "teaching_notes": "Expression: 'It can't be helped' or 'nothing can be done about it.' Often used to express resignation or acceptance of a situation.",
             "jlpt_level": "N4",
         },
         {
@@ -20,47 +24,26 @@ SAMPLE_FLASH_CARDS = {
         },
         {
             "japanese_example": "いこう",
-            "dictionary_form": "行く(いく)",
-            "teaching_notes": "Verb: volitional form of the verb '行く' (to go), used to express a decision or suggestion about the future, equivalent to saying 'let's go' in English.",
+            "dictionary_form": "行(い)く",
+            "teaching_notes": "Verb: volitional form of the verb '行(い)く' (to go), used to express a decision or suggestion about the future, equivalent to saying 'let's go' in English.",
             "jlpt_level": "N5",
         },
     ],
-    "translation": "It can't be helped, let's go with that.",
 }
 
 
 class FakeChatClient(AbstractChatClient):
-    def __init__(
-        self, response_type: str = "CHAT", tool_args: dict = SAMPLE_FLASH_CARDS
-    ):
+    def __init__(self, response_type: str = "CHAT", lesson: dict = SAMPLE_LESSON):
         self.response_type = response_type
-        self.tool_args = tool_args
+        self.lesson = lesson
 
     @override
     def complete_chat(
         self,
         input_messages: list[chat_types.ChatMessage],
-        tools=None,
-        tool_choice="auto",
-    ) -> chat_types.ChatMessage:
+        response_model,
+    ):
+        lesson = dict(self.lesson)
         if self.response_type == "CHAT":
-            return chat_types.ChatMessage(
-                role="assistant",
-                content="Well, hello, stranger...",
-                tool_calls=[],
-            )
-        else:
-            return chat_types.ChatMessage(
-                role="assistant",
-                content=None,
-                tool_calls=[
-                    chat_types.ToolCall(
-                        id="fake_call_001",
-                        type="function",
-                        function=chat_types.Function(
-                            name="fake_function_name",
-                            arguments=json.dumps(self.tool_args, ensure_ascii=False),
-                        ),
-                    )
-                ],
-            )
+            lesson["tutor_response"] = "Well, hello, stranger..."
+        return response_model.model_validate(lesson)

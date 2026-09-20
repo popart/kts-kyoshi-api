@@ -1,4 +1,7 @@
 import logging
+from typing import TypeVar
+
+from pydantic import BaseModel
 
 from clients.chat.abstract_chat_client import AbstractChatClient
 from data_types import chat_types
@@ -7,44 +10,43 @@ from data_types import chat_types
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+ResponseT = TypeVar("ResponseT", bound=BaseModel)
+
 
 class Prompt:
-    """Base class for setting up chat prompt.
+    """Base class for setting up a chat prompt.
 
     Inputs:
     - role: system commands. should specify that irrelevant responses will end in "..."
         to avoid saving them and their requests to db (see app.chat)
-    - tools: openai style function call specifications
-    - examples: list of example messages for few-shot priming.
-        for tool calls, you don't need to specify the tool call response!
-        ChatClient assumes that tool call results are always "SUCCESS"
+    - response_model: pydantic model the model must return (structured output)
+    - examples: list of example messages for few-shot priming. Assistant
+        examples carry their structured output as JSON in `content`.
     """
 
     def __init__(
         self,
         chat_client: AbstractChatClient,
         role: str,
-        tools: list[dict] | None = None,
+        response_model: type[ResponseT],
         examples: list[chat_types.ChatMessage] | None = None,
     ):
         self.chat_client = chat_client
+        self.response_model = response_model
         self.base_messages = []
         self.base_messages.append(chat_types.ChatMessage(role="system", content=role))
         if examples:
             self.base_messages += examples
-        self.tools = tools
 
-    def fetch(self, messages: list[chat_types.ChatMessage]) -> chat_types.ChatMessage:
+    def fetch(self, messages: list[chat_types.ChatMessage]) -> ResponseT | None:
         """
         Returns:
-          {} a chat message dict, empty if we didn't get a good response
+          the model's output parsed into `response_model`, or None if the model
+          didn't return a valid response.
         """
         input_messages = self.base_messages.copy() + messages
 
-        chat_message: chat_types.ChatMessage = self.chat_client.complete_chat(
+        return self.chat_client.complete_chat(
             input_messages=input_messages,
-            tools=self.tools,
-            tool_choice="required",
+            response_model=self.response_model,
         )
-
-        return chat_message

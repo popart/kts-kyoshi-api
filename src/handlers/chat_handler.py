@@ -1,4 +1,3 @@
-from dataclasses import asdict
 import datetime
 import uuid
 
@@ -11,7 +10,7 @@ from data_types import chat_types
 def create_chat(engine: Engine, user_id: uuid.UUID):
     chat = db_models.Chat(
         user_id=user_id,
-        llm_provider="OPENAI",
+        llm_provider="QWEN",
     )
     with Session(engine) as session:
         session.add(chat)
@@ -160,7 +159,7 @@ def save_chat_messages(
     chat_messages: list[chat_types.ChatMessage],
 ):
     messages = [
-        db_models.ChatMessage(chat_id=chat_id, user_id=user_id, content=asdict(cm))
+        db_models.ChatMessage(chat_id=chat_id, user_id=user_id, content=cm.model_dump(mode="json"))
         for cm in chat_messages
     ]
 

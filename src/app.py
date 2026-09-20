@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import json
 import logging
 import os
 import sys
@@ -112,6 +111,7 @@ def login():
         )
 
     except ValueError as e:
+        logger.warning("login token verification failed: %s", e)
         return flask.jsonify({"message": str(e)}), 400
 
 
@@ -236,18 +236,18 @@ def chat_message(chat_id):
         output_message = PROMPT_FLASHCARDS.fetch(input_messages)
         logger.info("output_message=%s", output_message)
 
-        if not (output_message.tool_calls):
+        if output_message is None or not output_message.tutor_response:
             return flask.jsonify({"status": "ERROR"}), 200
 
-        tool_call_args = json.loads(output_message.tool_calls[0].function.arguments)
-        if not (tool_call_args["tutor_response"]):
-            return flask.jsonify({"status": "ERROR"}), 200
+        assistant_message = chat_types.ChatMessage(
+            role="assistant", lesson=output_message
+        )
 
         chat_handler.save_chat_messages(
             engine=DB_ENGINE,
             user_id=user_id,
             chat_id=chat_id,
-            chat_messages=[new_chat_message, output_message],
+            chat_messages=[new_chat_message, assistant_message],
         )
     except Exception as e:
         logger.error(e, exc_info=True)
